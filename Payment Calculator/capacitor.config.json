@@ -1,0 +1,6 @@
+{
+  "appId": "net.paymentcalculator.app",
+  "appName": "Payment Calculator",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
