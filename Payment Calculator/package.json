@@ -12,7 +12,9 @@
     "@capacitor/android": "^4.7.1",
     "@capacitor/core": "^4.7.1",
     "@capacitor/ios": "^4.7.1",
-    "vue": "^3.2.47"
+    "typescript": "^5.0.4",
+    "vue": "^3.2.47",
+    "vue3-scroll-picker": "^0.1.15"
   },
   "devDependencies": {
     "@capacitor/cli": "^4.7.1",
