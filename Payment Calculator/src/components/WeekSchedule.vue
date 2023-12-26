@@ -1,10 +1,83 @@
 <script lang="ts">
+enum VIEW_MODE {
+    MONTH = "month",
+    WEEK = "week",
+}
+
 export default {
     data() {
+        // Sample entries data
+        const entries = [
+            {
+                id: 1,
+                workPlace: "PappaRich",
+                payRate: 23.23,
+                from: "2023-12-26T13:29:22Z",
+                to: "2023-12-26T17:29:22Z",
+            },
+            // Add more entries as needed
+        ];
+
+        const today = new Date();
+
         return {
             title: "Week Schedule",
+            weekDays: ["M.", "Tu.", "W.", "Th.", "F", "Sa.", "Su."],
+            VIEW_MODE,
+            view: VIEW_MODE.MONTH,
+            entries,
+            today,
         };
     },
+    computed: {
+        calendar() {
+            const firstDayOfMonth = new Date(this.today.getFullYear(), this.today.getMonth(), 1);
+            const lastDayOfMonth = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth() + 1, 0);
+            const daysInMonth = lastDayOfMonth.getDate();
+            const firstDayOfWeek = firstDayOfMonth.getDay();
+
+            let currentDate = new Date(firstDayOfMonth);
+
+            // Set the date to the first day of the week
+            // e.g. if the first day of the month is a Wednesday, then the first day of the week is Monday
+            currentDate.setDate(1 - firstDayOfWeek);
+
+            const calendar = [];
+            while (currentDate <= lastDayOfMonth) {
+                const week = [];
+                for (let i = 0; i < 7; i++) {
+                    const isPrevMonth = currentDate.getMonth() < firstDayOfMonth.getMonth();
+                    const isNextMonth = currentDate.getMonth() > firstDayOfMonth.getMonth();
+                    week.push({
+                        day: currentDate.getDate(),
+                        date: new Date(currentDate),
+                        prevMonth: isPrevMonth,
+                        nextMonth: isNextMonth,
+                    });
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                calendar.push(week);
+            }
+
+            return calendar;
+        },
+    },
+    methods: {
+        getEntriesForDay(date: Date) {
+            // Logic to filter entries for the given date
+            return this.entries.filter(entry => {
+                const fromDate = new Date(entry.from);
+                const toDate = new Date(entry.to);
+
+                // Set the time to 00:00:00:000
+                fromDate.setHours(0, 0, 0, 0);
+                toDate.setHours(0, 0, 0, 0);
+
+                // Compare the dates only
+                return fromDate.getTime() === date.getTime() || toDate.getTime() === date.getTime();
+            });
+        },
+    }
 };
 </script>
 
@@ -16,70 +89,16 @@ export default {
             <button class="next-btn"><img src="@/components/icons/next.svg" alt="next"></button>
         </div>
         <div class="calendar">
-            <div class="week-day">M.</div>
-            <div class="week-day">Tu.</div>
-            <div class="week-day">W.</div>
-            <div class="week-day">Th.</div>
-            <div class="week-day">F</div>
-            <div class="week-day">Sa.</div>
-            <div class="week-day">Su.</div>
+            <div class="week-day" v-for="day in weekDays" :key="day">{{ day }}</div>
             <div class="week-total">TOTAL</div>
 
-            <!-- DaySchedule component will be here -->
-
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day">1</div>
-            <div class="total">0</div>
-
-            <div class="day">2</div>
-            <div class="day">3</div>
-            <div class="day">4</div>
-            <div class="day">5</div>
-            <div class="day">6</div>
-            <div class="day">7</div>
-            <div class="day">8</div>
-            <div class="total">0</div>
-
-            <div class="day">9</div>
-            <div class="day">10</div>
-            <div class="day">11</div>
-            <div class="day">12</div>
-            <div class="day">13</div>
-            <div class="day">14</div>
-            <div class="day">15</div>
-            <div class="total">0</div>
-
-            <div class="day">16</div>
-            <div class="day">17</div>
-            <div class="day">18</div>
-            <div class="day">19</div>
-            <div class="day">20</div>
-            <div class="day">21</div>
-            <div class="day">22</div>
-            <div class="total">0</div>
-
-            <div class="day">23</div>
-            <div class="day">24</div>
-            <div class="day">25</div>
-            <div class="day">26</div>
-            <div class="day">27</div>
-            <div class="day">28</div>
-            <div class="day">29</div>
-            <div class="total">0</div>
-
-            <div class="day">30</div>
-            <div class="day">31</div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="day"></div>
-            <div class="total">0</div>
+            <template v-for="week in calendar">
+                <div v-for="(day, index) in week" :key="index"
+                    :class="{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }">
+                    {{ day.day }}
+                </div>
+                <div class="total">0</div>
+            </template>
         </div>
     </div>
 </template>
@@ -147,5 +166,15 @@ export default {
 
 .calendar .total::before {
     content: "$";
+}
+
+.calendar .has-entry::after {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: green;
+    margin: 0 auto;
 }
 </style>
