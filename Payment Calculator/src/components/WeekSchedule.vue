@@ -79,6 +79,7 @@ export default {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    font-size: larger;
 }
 
 .prev-btn,
@@ -110,7 +111,7 @@ export default {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(6, 1fr);
-    gap: 0.2rem;
+    gap: 0.5rem;
     margin-top: 1rem;
     text-align: center;
 }
