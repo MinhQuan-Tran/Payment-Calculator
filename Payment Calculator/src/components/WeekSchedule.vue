@@ -111,7 +111,8 @@ export default {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(6, 1fr);
-    gap: 0.5rem;
+    column-gap: 0.5rem;
+    row-gap: 0.8rem;
     margin-top: 1rem;
     text-align: center;
 }
