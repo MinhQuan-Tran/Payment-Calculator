@@ -27,20 +27,25 @@ export default {
             view: VIEW_MODE.MONTH,
             entries,
             today,
+            monthChange: 0,
         };
     },
     computed: {
         calendar() {
-            const firstDayOfMonth = new Date(this.today.getFullYear(), this.today.getMonth(), 1);
+            const changedDate = new Date(this.today);
+            changedDate.setMonth(changedDate.getMonth() + this.monthChange);
+
+            const firstDayOfMonth = new Date(changedDate.getFullYear(), changedDate.getMonth(), 1);
             const lastDayOfMonth = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth() + 1, 0);
-            const daysInMonth = lastDayOfMonth.getDate();
             const firstDayOfWeek = firstDayOfMonth.getDay();
 
             let currentDate = new Date(firstDayOfMonth);
 
-            // Set the date to the first day of the week
-            // e.g. if the first day of the month is a Wednesday, then the first day of the week is Monday
-            currentDate.setDate(1 - firstDayOfWeek);
+            // Set the date to the first day of the week (Monday)
+            // e.g. if the first day of the month is on Friday 1 December 2023, 
+            // then the first day of the week is 1 December 2023 - 5 days = Sunday 26 November 2023
+            // Sunday 26 November 2023 + 1 day = Monday 27 November 2023
+            currentDate.setDate(currentDate.getDate() - firstDayOfWeek + 1);
 
             const calendar = [];
             while (currentDate <= lastDayOfMonth) {
@@ -64,7 +69,7 @@ export default {
     },
     methods: {
         getEntriesForDay(date: Date) {
-            // Logic to filter entries for the given date
+            // Filter entries for the given date
             return this.entries.filter(entry => {
                 const fromDate = new Date(entry.from);
                 const toDate = new Date(entry.to);
@@ -77,29 +82,49 @@ export default {
                 return fromDate.getTime() === date.getTime() || toDate.getTime() === date.getTime();
             });
         },
-    }
+        updateTitleByMonth() {
+            const date = new Date(this.today);
+            date.setMonth(date.getMonth() + this.monthChange);
+            this.title = date.toLocaleString("default", { month: "long", year: "numeric" });
+        },
+        goToNextMonth() {
+            this.monthChange++;
+            this.updateTitleByMonth();
+        },
+        goToPrevMonth() {
+            this.monthChange--;
+            this.updateTitleByMonth();
+        },
+    },
+    mounted() {
+        this.updateTitleByMonth();
+    },
 };
 </script>
 
 <template>
     <div class="week-schedule">
         <div class="title">
-            <button class="prev-btn"><img src="@/components/icons/next.svg" alt="prev"></button>
+            <button class="prev-btn" @click="goToPrevMonth">
+                <img src="@/components/icons/next.svg" alt="prev">
+            </button>
             <b>{{ title }}</b>
-            <button class="next-btn"><img src="@/components/icons/next.svg" alt="next"></button>
+            <button class="next-btn" @click="goToNextMonth">
+                <img src="@/components/icons/next.svg" alt="next">
+            </button>
         </div>
         <div class="calendar">
             <div class="week-day" v-for="day in weekDays" :key="day">{{ day }}</div>
             <div class="week-total">TOTAL</div>
 
-            <template v-for="week in calendar">
-                <div v-for="(day, index) in week" :key="index">
+            <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
+                <div v-for="(day, dayIndex) in week" :key="dayIndex">
                     <a
                         :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
                         {{ day.day }}
                     </a>
                 </div>
-                <div class="total">0</div>
+                <div class="total">100.00</div>
             </template>
         </div>
     </div>
@@ -148,7 +173,7 @@ export default {
 
 .calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr) 2fr;
+    grid-template-columns: repeat(7, 1fr) minmax(min-content, 2fr);
     grid-template-rows: repeat(7, 2em);
     margin-top: 1rem;
     text-align: center;
@@ -184,7 +209,7 @@ export default {
     text-align: left;
     justify-content: start;
     background-color: rgba(0, 188, 235, 0.3);
-    padding-left: 0.5rem;
+    padding: 0 0.5rem;
 }
 
 .total:last-child {

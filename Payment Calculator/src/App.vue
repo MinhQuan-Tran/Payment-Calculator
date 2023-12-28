@@ -1,18 +1,18 @@
 <script lang="ts">
 import WeekSchedule from "@/components/WeekSchedule.vue";
-import PaymentResult from "@/components/PaymentResult.vue";
+import DaySchedule from "@/components/DaySchedule.vue";
 
 export default {
   components: {
     WeekSchedule,
-    PaymentResult,
+    DaySchedule,
   },
 };
 </script>
 
 <template>
   <WeekSchedule />
-  <PaymentResult />
+  <DaySchedule />
 </template>
 
 <style scoped></style>
