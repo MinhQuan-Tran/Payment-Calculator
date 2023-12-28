@@ -149,8 +149,7 @@ export default {
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr) 2fr;
-    grid-template-rows: repeat(7, 1.4em);
-    gap: 0.5rem;
+    grid-template-rows: repeat(7, 2em);
     margin-top: 1rem;
     text-align: center;
     width: 100%;
@@ -162,23 +161,42 @@ export default {
     align-items: center;
     justify-content: center;
     overflow: visible;
+    box-sizing: border-box;
 }
 
-.calendar .week-day,
-.calendar .week-total {
+.week-day,
+.week-total {
     font-weight: bold;
     font-size: smaller;
 }
 
-.calendar .week-day {
-    color: rgba(0, 0, 0, 0.5)
+.week-day {
+    color: rgba(0, 0, 0, 0.5);
 }
 
-.calendar .total::before {
+.week-total {
+    background-color: rgba(0, 188, 235, 0.3);
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.total {
+    text-align: left;
+    justify-content: start;
+    background-color: rgba(0, 188, 235, 0.3);
+    padding-left: 0.5rem;
+}
+
+.total:last-child {
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+.total::before {
     content: "$";
 }
 
-.calendar .day {
+.day {
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
@@ -188,22 +206,24 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    background: none;
 }
 
-.calendar .day:hover {
+.day:hover {
     background-color: rgba(0, 204, 255, 0.15);
 }
 
-.calendar .day:focus {
+.day:focus {
     background-color: rgba(0, 204, 255, 0.3);
 }
 
-.calendar .prev-month,
-.calendar .next-month {
+.prev-month,
+.next-month {
     color: rgba(0, 0, 0, 0.5);
 }
 
-.calendar .has-entry::after {
+.has-entry::after {
     content: "";
     position: absolute;
     bottom: 0rem;
