@@ -153,6 +153,7 @@ export default {
     gap: 0.5rem;
     margin-top: 1rem;
     text-align: center;
+    width: 100%;
 }
 
 .calendar>* {
