@@ -227,6 +227,7 @@ export default {
     background-color: rgba(0, 188, 235, 0.3);
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
+    border-bottom: 2px solid white;
 }
 
 .total {
