@@ -93,9 +93,11 @@ export default {
             <div class="week-total">TOTAL</div>
 
             <template v-for="week in calendar">
-                <div v-for="(day, index) in week" :key="index"
-                    :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
-                    {{ day.day }}
+                <div v-for="(day, index) in week" :key="index">
+                    <a
+                        :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
+                        {{ day.day }}
+                    </a>
                 </div>
                 <div class="total">0</div>
             </template>
@@ -147,10 +149,18 @@ export default {
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr) 2fr;
-    grid-template-rows: repeat(6, 1fr);
+    grid-template-rows: repeat(7, 1.4em);
     gap: 0.5rem;
     margin-top: 1rem;
     text-align: center;
+}
+
+.calendar>* {
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
 }
 
 .calendar .week-day,
@@ -171,19 +181,22 @@ export default {
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease-in-out;
+    height: 2em;
+    width: 2em;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.calendar .day:hover::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    height: 1.7em;
-    width: 1.7em;
-    border-radius: 50%;
-    background: rgba(0, 204, 255, 0.15);
-    z-index: -1;
+.calendar .day:hover {
+    background-color: rgba(0, 204, 255, 0.15);
+}
+
+.calendar .day:focus {
+    background-color: rgba(0, 204, 255, 0.3);
 }
 
 .calendar .prev-month,
@@ -194,7 +207,7 @@ export default {
 .calendar .has-entry::after {
     content: "";
     position: absolute;
-    bottom: -0.2rem;
+    bottom: 0rem;
     left: 50%;
     transform: translateX(-50%);
     display: block;
