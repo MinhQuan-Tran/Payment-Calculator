@@ -94,7 +94,7 @@ export default {
 
             <template v-for="week in calendar">
                 <div v-for="(day, index) in week" :key="index"
-                    :class="{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }">
+                    :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
                     {{ day.day }}
                 </div>
                 <div class="total">0</div>
@@ -137,7 +137,7 @@ export default {
 
 .prev-btn:hover,
 .next-btn:hover {
-    background-color: rgba(0, 204, 255, 0.1);
+    background-color: rgba(0, 204, 255, 0.15);
 }
 
 .prev-btn {
@@ -146,10 +146,9 @@ export default {
 
 .calendar {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(7, 1fr) 2fr;
     grid-template-rows: repeat(6, 1fr);
-    column-gap: 0.5rem;
-    row-gap: 0.8rem;
+    gap: 0.5rem;
     margin-top: 1rem;
     text-align: center;
 }
@@ -168,11 +167,39 @@ export default {
     content: "$";
 }
 
+.calendar .day {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.calendar .day:hover::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    height: 1.7em;
+    width: 1.7em;
+    border-radius: 50%;
+    background: rgba(0, 204, 255, 0.15);
+    z-index: -1;
+}
+
+.calendar .prev-month,
+.calendar .next-month {
+    color: rgba(0, 0, 0, 0.5);
+}
+
 .calendar .has-entry::after {
     content: "";
+    position: absolute;
+    bottom: -0.2rem;
+    left: 50%;
+    transform: translateX(-50%);
     display: block;
-    width: 8px;
-    height: 8px;
+    width: 0.3rem;
+    height: 0.3rem;
     border-radius: 50%;
     background-color: green;
     margin: 0 auto;
