@@ -188,8 +188,6 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
 }
 
 .calendar .day:hover {
