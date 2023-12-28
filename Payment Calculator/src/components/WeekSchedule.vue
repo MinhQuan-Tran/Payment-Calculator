@@ -185,6 +185,7 @@ export default {
     height: 32px;
     width: 32px;
     transition: all 0.3s ease-in-out;
+    user-select: none;
 }
 
 .prev-btn:hover,

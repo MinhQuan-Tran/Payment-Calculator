@@ -10,7 +10,7 @@ export default {
     methods: {
         toTime(dateStr: string) {
             const date = new Date(dateStr);
-            return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         },
     },
 };
@@ -62,5 +62,10 @@ export default {
 .info {
     display: flex;
     flex-direction: column;
+}
+
+.time {
+    text-align: right;
+    width: 80px;
 }
 </style>
