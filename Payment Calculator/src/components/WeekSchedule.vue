@@ -4,20 +4,17 @@ enum VIEW_MODE {
     WEEK = "week",
 }
 
-export default {
-    data() {
-        // Sample entries data
-        const entries = [
-            {
-                id: 1,
-                workPlace: "PappaRich",
-                payRate: 23.23,
-                from: "2023-12-26T13:29:22Z",
-                to: "2023-12-26T17:29:22Z",
-            },
-            // Add more entries as needed
-        ];
+import { type Entry } from "@/types";
 
+export default {
+    props: {
+        entries: {
+            type: Array as () => Entry[],
+            required: true,
+        },
+    },
+    emits: ["selectedEntries"],
+    data() {
         const today = new Date();
 
         return {
@@ -25,7 +22,6 @@ export default {
             weekDays: ["M.", "Tu.", "W.", "Th.", "F", "Sa.", "Su."],
             VIEW_MODE,
             view: VIEW_MODE.MONTH,
-            entries,
             today,
             monthChange: 0,
         };
@@ -49,18 +45,44 @@ export default {
 
             const calendar = [];
             while (currentDate <= lastDayOfMonth) {
-                const week = [];
+                const week = {
+                    days: [] as {
+                        day: number,
+                        date: Date,
+                        prevMonth: boolean,
+                        nextMonth: boolean
+                    }[],
+                    total: 0,
+                };
+
                 for (let i = 0; i < 7; i++) {
                     const isPrevMonth = currentDate.getMonth() < firstDayOfMonth.getMonth();
                     const isNextMonth = currentDate.getMonth() > firstDayOfMonth.getMonth();
-                    week.push({
+
+                    week.days.push({
                         day: currentDate.getDate(),
                         date: new Date(currentDate),
                         prevMonth: isPrevMonth,
                         nextMonth: isNextMonth,
                     });
+
+                    week.total += this.getEntriesForDay(currentDate).reduce((acc, entry) => {
+                        const fromDate = new Date(entry.from);
+                        const toDate = new Date(entry.to);
+
+                        const workTime = toDate.getTime() - fromDate.getTime();
+                        const workHours = workTime / (1000 * 60 * 60);
+
+                        acc += workHours * entry.payRate;
+                        return acc;
+                    }, 0);
+
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
+
+                // Round the total to 2 decimal places
+                week.total = Math.round(week.total * 100) / 100;
+
                 calendar.push(week);
             }
 
@@ -118,13 +140,15 @@ export default {
             <div class="week-total">TOTAL</div>
 
             <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
-                <div v-for="(day, dayIndex) in week" :key="dayIndex">
-                    <a
+                <div v-for="(day, dayIndex) in week.days" :key="dayIndex">
+                    <div @click="$emit('selectedEntries', getEntriesForDay(day.date))"
                         :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
                         {{ day.day }}
-                    </a>
+                    </div>
                 </div>
-                <div class="total">100.00</div>
+                <div class="total">
+                    {{ week.total }}
+                </div>
             </template>
         </div>
     </div>
@@ -175,7 +199,7 @@ export default {
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr) minmax(min-content, 2fr);
-    grid-template-rows: repeat(7, 2em);
+    grid-template-rows: repeat(auto-fill, 2em);
     text-align: center;
     width: 100%;
 }
