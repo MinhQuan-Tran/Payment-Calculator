@@ -144,7 +144,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     font-size: larger;
-    margin: 0.5rem 0;
+    margin: 0.5rem 0 1rem 0;
 }
 
 .prev-btn,
