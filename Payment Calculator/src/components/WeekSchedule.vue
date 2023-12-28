@@ -144,6 +144,7 @@ export default {
     align-items: center;
     justify-content: space-between;
     font-size: larger;
+    margin: 0.5rem 0;
 }
 
 .prev-btn,
@@ -175,7 +176,6 @@ export default {
     display: grid;
     grid-template-columns: repeat(7, 1fr) minmax(min-content, 2fr);
     grid-template-rows: repeat(7, 2em);
-    margin-top: 1rem;
     text-align: center;
     width: 100%;
 }
