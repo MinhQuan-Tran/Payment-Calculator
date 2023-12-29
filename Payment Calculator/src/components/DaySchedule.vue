@@ -96,20 +96,22 @@ export default {
         <button @click="openAddEntryDialog">Add Entry</button>
         <dialog id="add-entry-dialog">
             <button class="close-btn" @click="closeAddEntryDialog">X</button>
-            <h1>Add Entry</h1>
-            <span>{{ selectedDate.toDateString() }}</span>
-            <form id="add-entry-form">
-                <label for="workplace">Workplace</label>
-                <input type="text" id="workplace" name="workplace" required>
-                <label for="payRate">Pay Rate</label>
-                <input type="number" id="payRate" name="payRate" step="0.01" required>
-                <label for="from">From</label>
-                <input type="time" id="from" name="from" required>
-                <label for="to">To</label>
-                <input type="time" id="to" name="to" required>
-                <br>
-                <button @click="addEntry" type="submit">Add</button>
-            </form>
+            <div class="content">
+                <h1 class="title">Add Entry</h1>
+                <span>{{ selectedDate.toDateString() }}</span>
+                <form id="add-entry-form">
+                    <label for="workplace">Workplace</label>
+                    <input type="text" id="workplace" name="workplace" placeholder="e.g. PappaRich" required>
+                    <label for="payRate">Pay Rate</label>
+                    <input type="number" id="payRate" name="payRate" step="0.01" placeholder="e.g. 23.23" required>
+                    <label for="from">From</label>
+                    <input type="time" id="from" name="from" placeholder="10:00" required>
+                    <label for="to">To</label>
+                    <input type="time" id="to" name="to" placeholder="10:00" required>
+                    <br>
+                    <button @click="addEntry" type="submit">Add</button>
+                </form>
+            </div>
         </dialog>
     </div>
 </template>
@@ -176,6 +178,13 @@ dialog {
     border: none;
     outline: none;
     border-radius: var(--border-radius);
+    width: clamp(300px, 80vw, 500px);
+}
+
+#add-entry-dialog .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 button {
@@ -199,12 +208,14 @@ button {
     position: absolute;
     top: 0;
     right: 0;
-    padding: 0.5em;
+    line-height: 1em;
+    padding: 1em;
     background: transparent;
     user-select: none;
 }
 
 #add-entry-form {
+    align-self: stretch;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -215,10 +226,8 @@ button {
 }
 
 #add-entry-form input {
-    border: none;
-    outline: none;
+    border: 1px solid rgba(0, 0, 0, 0.5);
     border-radius: var(--border-radius);
-    background: rgba(0, 0, 0, 0.05);
     box-sizing: border-box;
     width: 100%;
     padding: 0.5em;
