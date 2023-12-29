@@ -121,7 +121,6 @@ export default {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
 }
 
 .entry-list {
@@ -129,7 +128,7 @@ export default {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-    padding: 0 0.35rem;
+    padding: 0 0.35rem 0.5rem 0.35rem;
 }
 
 .entry {
@@ -174,34 +173,10 @@ export default {
     font-weight: bold;
 }
 
-dialog {
-    border: none;
-    outline: none;
-    border-radius: var(--border-radius);
-    width: clamp(300px, 80vw, 500px);
-}
-
 #add-entry-dialog .content {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-button {
-    background: none;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--border-radius);
-    line-height: 2em;
-    padding: 0.5em;
-    font-weight: bold;
-    transition: all 0.3s ease-in-out;
-    background: rgba(var(--primary-color), 1);
 }
 
 .close-btn {

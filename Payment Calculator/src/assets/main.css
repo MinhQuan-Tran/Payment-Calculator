@@ -15,10 +15,39 @@ body {
   width: 99vw;
 }
 
+dialog {
+  border: none;
+  outline: none;
+  border-radius: var(--border-radius);
+  width: clamp(300px, 80vw, 500px);
+  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+}
+
+button {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  line-height: 2em;
+  padding: 0.5em;
+  font-weight: bold;
+  transition: all 0.3s ease-in-out;
+  background: rgba(var(--primary-color), 1);
+}
+
+button:hover {
+  background: rgba(var(--primary-color), 0.8);
+}
+
 #app {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  height: 100vh;
+  height: 100%;
   width: 100%;
 }
