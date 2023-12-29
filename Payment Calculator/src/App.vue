@@ -32,6 +32,25 @@ export default {
     addEntry(entry: Entry) {
       this.entries.push(entry);
     },
+    clearData(option: string) {
+      switch (option) {
+        case "all":
+          this.entries = [];
+          break;
+        case "day":
+          this.entries = this.entries.filter(entry => {
+            const fromDate = new Date(entry.from);
+            const toDate = new Date(entry.to);
+
+            // Set the time to 00:00:00:000
+            fromDate.setHours(0, 0, 0, 0);
+            toDate.setHours(0, 0, 0, 0);
+
+            return fromDate > this.selectedDate || this.selectedDate > toDate;
+          });
+          break;
+      }
+    },
   },
   watch: {
     selectedEntry(entry: Entry | null) {
@@ -60,7 +79,7 @@ export default {
 <template>
   <WeekSchedule :entries="entries" v-model:selected-date="selectedDate" />
   <hr>
-  <DaySchedule :entries="selectedEntries" :selected-date="selectedDate" @add-entry="addEntry" />
+  <DaySchedule :entries="selectedEntries" :selected-date="selectedDate" @add-entry="addEntry" @clear-data="clearData" />
 </template>
 
 <style scoped>

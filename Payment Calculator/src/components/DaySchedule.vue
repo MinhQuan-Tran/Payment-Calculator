@@ -12,7 +12,7 @@ export default {
             required: true,
         },
     },
-    emits: ["addEntry"],
+    emits: ["addEntry", "clearData"],
     methods: {
         toTime(dateStr: string) {
             const date = new Date(dateStr);
@@ -28,14 +28,15 @@ export default {
             const hours = this.hourDiff(entry);
             return entry.payRate * hours;
         },
-        openAddEntryDialog() {
-            const dialog = document.querySelector("dialog#add-entry-dialog") as HTMLDialogElement;
+        openDialog(dialogRef: string) {
+            const dialog = this.$refs[dialogRef] as HTMLDialogElement;
             if (dialog) {
                 dialog.showModal();
             }
         },
-        closeAddEntryDialog() {
-            const dialog = document.querySelector("dialog#add-entry-dialog") as HTMLDialogElement;
+        closeDialog(event: Event) {
+            const target = event.target as HTMLElement;
+            const dialog = target.closest("dialog") as HTMLDialogElement;
             if (dialog) {
                 dialog.close();
             }
@@ -71,6 +72,25 @@ export default {
                 }
             }
         },
+        clearData(event: Event) {
+            const dialog = document.querySelector("dialog#clear-data-dialog") as HTMLDialogElement;
+            if (dialog) {
+                const form = dialog.querySelector("form#clear-data-form") as HTMLFormElement;
+                if (form && form.checkValidity()) {
+                    event.preventDefault();
+
+                    const formData = new FormData(form);
+
+                    const clearOption = formData.get("clearOption") as string;
+
+                    this.$emit("clearData", clearOption);
+
+                    form.reset();
+
+                    dialog.close();
+                }
+            }
+        },
         currencyFormat,
     },
 };
@@ -97,23 +117,51 @@ export default {
                 </div>
             </div>
         </div>
-        <button @click="openAddEntryDialog">Add Entry</button>
-        <dialog id="add-entry-dialog">
-            <button class="close-btn" @click="closeAddEntryDialog">X</button>
+        <div class="actions">
+            <button @click="openDialog('clear-data-dialog')" class="clear">Clear</button>
+            <button @click="openDialog('add-entry-dialog')">Add Entry</button>
+        </div>
+        <dialog id="add-entry-dialog" ref="add-entry-dialog">
+            <button class="close-btn" @click="closeDialog">X</button>
             <div class="content">
                 <h1 class="title">Add Entry</h1>
                 <span>{{ selectedDate.toDateString() }}</span>
                 <form id="add-entry-form">
                     <label for="workplace">Workplace</label>
                     <input type="text" id="workplace" name="workplace" placeholder="e.g. PappaRich" required>
-                    <label for="payRate">Pay Rate</label>
-                    <input type="number" id="payRate" name="payRate" step="0.01" placeholder="e.g. 23.23" required>
+                    <label for="pay-rate">Pay Rate</label>
+                    <input type="number" id="pay-rate" name="payRate" step="0.01" placeholder="e.g. 23.23" required>
                     <label for="from">From</label>
                     <input type="time" id="from" name="from" placeholder="10:00" required>
                     <label for="to">To</label>
                     <input type="time" id="to" name="to" placeholder="10:00" required>
                     <br>
                     <button @click="addEntry" type="submit">Add</button>
+                </form>
+            </div>
+        </dialog>
+        <dialog id="clear-data-dialog" ref="clear-data-dialog">
+            <button class="close-btn" @click="closeDialog">X</button>
+            <div class="content">
+                <h1 class="title">Clear Data</h1>
+                <form id="clear-data-form">
+                    <span>What data do you want to clear?</span>
+                    <div>
+                        <input type="radio" id="clear-option-day" name="clearOption" value="day" required>
+                        <label for="clear-option-day">Today</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="clear-option-all" name="clearOption" value="all" required>
+                        <label for="clear-option-all">All</label>
+                    </div>
+
+                    <br>
+
+                    <div>
+                        <input type="checkbox" id="clear-confirm" name="clearConfirm" required>
+                        <label for="clear-confirm">This action cannot be undone. Are you sure?</label>
+                    </div>
+                    <button @click="clearData" type="submit">Clear</button>
                 </form>
             </div>
         </dialog>
@@ -132,7 +180,7 @@ export default {
     flex-direction: column;
     align-items: stretch;
     gap: 1rem;
-    padding: 0 0.35rem 0.5rem 0.35rem;
+    padding: 0 0.35rem;
 }
 
 .entry {
@@ -141,6 +189,7 @@ export default {
     flex-direction: row;
     align-items: start;
     justify-content: start;
+    margin-bottom: 0.5rem;
 }
 
 .divider {
@@ -173,14 +222,24 @@ export default {
     justify-content: space-between;
 }
 
-.primary {
+.info .primary {
     font-weight: bold;
 }
 
-#add-entry-dialog .content {
+.actions {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
+    gap: 0.5rem;
+}
+
+.actions .clear {
+    background: rgba(var(--warning-color), 1);
+    font-weight: normal;
+}
+
+.actions button:last-child {
+    flex: 10;
 }
 
 .close-btn {
@@ -191,13 +250,6 @@ export default {
     padding: 1em;
     background: transparent;
     user-select: none;
-}
-
-#add-entry-form {
-    align-self: stretch;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
 }
 
 #add-entry-form label {
@@ -211,5 +263,26 @@ export default {
     box-sizing: border-box;
     width: 100%;
     padding: 0.5em;
+}
+
+#add-entry-form input:focus {
+    outline: 2px solid rgba(var(--primary-color), 1);
+}
+
+#clear-data-form {
+    gap: 0.5em;
+}
+
+#clear-data-form label {
+    margin-left: 0.5em;
+}
+
+#clear-data-form input {
+    margin-left: 0;
+}
+
+#clear-data-form button[type="submit"] {
+    background: rgba(var(--warning-color), 1);
+    font-weight: normal;
 }
 </style>
