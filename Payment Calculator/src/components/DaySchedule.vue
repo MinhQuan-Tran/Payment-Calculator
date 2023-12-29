@@ -227,6 +227,7 @@ button {
 
 #add-entry-form input {
     border: 1px solid rgba(0, 0, 0, 0.5);
+    background-color: inherit;
     border-radius: var(--border-radius);
     box-sizing: border-box;
     width: 100%;
