@@ -45,7 +45,7 @@ export default {
 
             const dialog = document.querySelector("dialog#add-entry-dialog") as HTMLDialogElement;
             if (dialog) {
-                const form = dialog.querySelector("form.add-entry-dialog") as HTMLFormElement;
+                const form = dialog.querySelector("form#add-entry-form") as HTMLFormElement;
                 if (form) {
                     const formData = new FormData(form);
 
@@ -98,7 +98,7 @@ export default {
             <button class="close-btn" @click="closeAddEntryDialog">X</button>
             <h1>Add Entry</h1>
             <span>{{ selectedDate.toDateString() }}</span>
-            <form class="add-entry-dialog">
+            <form id="add-entry-form">
                 <label for="workplace">Workplace</label>
                 <input type="text" id="workplace" name="workplace" required>
                 <label for="payRate">Pay Rate</label>
@@ -204,13 +204,13 @@ button {
     user-select: none;
 }
 
-.add-entry-dialog {
+#add-entry-form {
     display: flex;
     flex-direction: column;
     align-items: stretch;
 }
 
-.add-entry-dialog label {
+#add-entry-form label {
     margin-top: 0.5em;
 }
 </style>
