@@ -62,7 +62,11 @@ export default {
                         from: from.toISOString(),
                         to: to.toISOString(),
                     };
+
                     this.$emit("addEntry", entry);
+
+                    form.reset();
+
                     dialog.close();
                 }
             }

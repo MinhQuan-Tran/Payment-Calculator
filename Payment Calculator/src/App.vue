@@ -5,89 +5,8 @@ import { type Entry } from "@/types";
 
 export default {
   data() {
-    // Sample entries data
-    const entries = [
-      {
-        id: 1,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2023-11-01T19:00:00Z", // Converted from Sydney time to UTC
-        to: "2023-11-01T23:00:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 2,
-        workplace: "Coffee House",
-        payRate: 18.50,
-        from: "2023-11-05T21:30:00Z", // Converted from Sydney time to UTC
-        to: "2023-11-06T01:30:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 3,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2023-11-12T18:45:00Z", // Converted from Sydney time to UTC
-        to: "2023-11-12T23:15:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 4,
-        workplace: "Coffee House",
-        payRate: 18.50,
-        from: "2023-12-01T07:15:00Z", // Converted from Sydney time to UTC
-        to: "2023-12-01T12:15:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 5,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2023-12-15T20:00:00Z", // Converted from Sydney time to UTC
-        to: "2023-12-16T00:30:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 6,
-        workplace: "Coffee House",
-        payRate: 18.50,
-        from: "2023-12-20T09:30:00Z", // Converted from Sydney time to UTC
-        to: "2023-12-20T15:00:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 7,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2024-01-05T18:30:00Z", // Converted from Sydney time to UTC
-        to: "2024-01-05T23:00:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 8,
-        workplace: "Coffee House",
-        payRate: 18.50,
-        from: "2024-01-15T08:00:00Z", // Converted from Sydney time to UTC
-        to: "2024-01-15T14:00:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 9,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2024-02-10T19:45:00Z", // Converted from Sydney time to UTC
-        to: "2024-02-11T00:15:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 10,
-        workplace: "Coffee House",
-        payRate: 18.50,
-        from: "2024-02-20T10:15:00Z", // Converted from Sydney time to UTC
-        to: "2024-02-20T15:45:00Z",   // Converted from Sydney time to UTC
-      },
-      {
-        id: 11,
-        workplace: "PappaRich",
-        payRate: 23.23,
-        from: "2023-12-16T05:00:00Z", // Converted from Sydney time to UTC
-        to: "2023-12-16T10:30:00Z",   // Converted from Sydney time to UTC
-      },
-    ];
-
     return {
-      entries,
+      entries: [] as Entry[],
       selectedDate: new Date(),
     }
   },
@@ -118,10 +37,22 @@ export default {
     selectedEntry(entry: Entry | null) {
       console.log(entry);
     },
+    entries: {
+      handler(entries: Entry[]) {
+        localStorage.setItem("entries", JSON.stringify(entries));
+      },
+      deep: true,
+    }
   },
   components: {
     WeekSchedule,
     DaySchedule,
+  },
+  mounted() {
+    const entries = localStorage.getItem("entries");
+    if (entries) {
+      this.entries = JSON.parse(entries);
+    }
   },
 };
 </script>
