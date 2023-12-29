@@ -1,5 +1,6 @@
 <script lang="ts">
 import { type Entry } from "@/types";
+import { currencyFormat } from "@/utils";
 
 export default {
     props: {
@@ -12,6 +13,17 @@ export default {
             const date = new Date(dateStr);
             return date.toLocaleTimeString('en-AU', { hour12: true, hour: "numeric", minute: "2-digit" });
         },
+        hourDiff(entry: Entry) {
+            const fromTime = new Date(entry.from).getTime();
+            const toTime = new Date(entry.to).getTime();
+            const diff = toTime - fromTime;
+            return diff / 1000 / 60 / 60;
+        },
+        entryPay(entry: Entry) {
+            const hours = this.hourDiff(entry);
+            return entry.payRate * hours;
+        },
+        currencyFormat,
     },
 };
 </script>
@@ -26,8 +38,14 @@ export default {
                 </div>
                 <div class="divider"></div>
                 <div class="info">
-                    <b>{{ entry.workPlace }}</b>
-                    <span>${{ entry.payRate }}/hr</span>
+                    <div class="primary">
+                        <span>{{ entry.workplace }}</span>
+                        <span>{{ currencyFormat(entryPay(entry)) }}</span>
+                    </div>
+                    <div class="secondary">
+                        <span>{{ currencyFormat(entry.payRate) }}/hr</span>
+                        <span>{{ hourDiff(entry) }} hours</span>
+                    </div>
                 </div>
             </li>
         </ul>
@@ -62,10 +80,25 @@ export default {
 .info {
     display: flex;
     flex-direction: column;
+    gap: 0.2rem;
 }
 
 .time {
     text-align: right;
-    width: 4.5em;
+    width: 4.2rem;
+}
+
+.info {
+    flex: 1;
+}
+
+.info>* {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.primary {
+    font-weight: bold;
 }
 </style>

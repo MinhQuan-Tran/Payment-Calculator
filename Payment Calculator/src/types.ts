@@ -1,6 +1,6 @@
 export type Entry = {
   id: number
-  workPlace: string
+  workplace: string
   payRate: number
   from: string
   to: string

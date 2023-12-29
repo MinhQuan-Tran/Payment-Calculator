@@ -1,10 +1,11 @@
 <script lang="ts">
+import { type Entry } from "@/types";
+import { currencyFormat } from "@/utils";
+
 enum VIEW_MODE {
     MONTH = "month",
     WEEK = "week",
 }
-
-import { type Entry } from "@/types";
 
 export default {
     props: {
@@ -117,6 +118,7 @@ export default {
             this.monthChange--;
             this.updateTitleByMonth();
         },
+        currencyFormat,
     },
     mounted() {
         this.updateTitleByMonth();
@@ -147,7 +149,7 @@ export default {
                     </div>
                 </div>
                 <div class="total">
-                    {{ week.total }}
+                    {{ currencyFormat(week.total) }}
                 </div>
             </template>
         </div>
@@ -241,10 +243,6 @@ export default {
 .total:last-child {
     border-bottom-left-radius: var(--border-radius);
     border-bottom-right-radius: var(--border-radius);
-}
-
-.total::before {
-    content: "$";
 }
 
 .day {
