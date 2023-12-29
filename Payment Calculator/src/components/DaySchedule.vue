@@ -30,8 +30,8 @@ export default {
 
 <template>
     <div class="day-schedule">
-        <ul class="entry-list">
-            <li v-for="entry in entries" :key="entry.id" class="entry">
+        <div class="entry-list">
+            <div v-for="entry in entries" :key="entry.id" class="entry">
                 <div class="time">
                     <span>{{ toTime(entry.from) }}</span>
                     <span>{{ toTime(entry.to) }}</span>
@@ -47,16 +47,17 @@ export default {
                         <span>{{ hourDiff(entry) }} hours</span>
                     </div>
                 </div>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
 .entry-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 0.2rem;
 }
 
 .entry {
@@ -65,7 +66,6 @@ export default {
     flex-direction: row;
     align-items: start;
     justify-content: start;
-    padding: 8px;
 }
 
 .divider {
