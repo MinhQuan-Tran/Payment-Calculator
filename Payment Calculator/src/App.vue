@@ -129,7 +129,7 @@ export default {
 <template>
   <WeekSchedule :entries="entries" v-model:selected-date="selectedDate" />
   <hr>
-  <DaySchedule :entries="selectedEntries" @add-entry="addEntry" />
+  <DaySchedule :entries="selectedEntries" :selected-date="selectedDate" @add-entry="addEntry" />
 </template>
 
 <style scoped>

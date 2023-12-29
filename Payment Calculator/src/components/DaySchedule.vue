@@ -7,6 +7,10 @@ export default {
         entries: {
             type: Array as () => Entry[],
         },
+        selectedDate: {
+            type: Date,
+            required: true,
+        },
     },
     emits: ["addEntry"],
     methods: {
@@ -44,12 +48,19 @@ export default {
                 const form = dialog.querySelector("form.add-entry-dialog") as HTMLFormElement;
                 if (form) {
                     const formData = new FormData(form);
+
+                    const from = new Date(this.selectedDate);
+                    from.setHours(Number(formData.get("from")?.toString().split(":")[0]));
+
+                    const to = new Date(this.selectedDate);
+                    to.setHours(Number(formData.get("to")?.toString().split(":")[0]));
+
                     const entry = {
                         id: (this.entries?.length ?? 0) + 1,
                         workplace: formData.get("workplace") as string,
                         payRate: Number(formData.get("payRate")),
-                        from: new Date(formData.get("from") as string).toISOString(),
-                        to: new Date(formData.get("to") as string).toISOString(),
+                        from: from.toISOString(),
+                        to: to.toISOString(),
                     };
                     this.$emit("addEntry", entry);
                     dialog.close();
@@ -92,9 +103,9 @@ export default {
                 <label for="payRate">Pay Rate</label>
                 <input type="number" id="payRate" name="payRate" step="0.01" required>
                 <label for="from">From</label>
-                <input type="datetime-local" id="from" name="from" required>
+                <input type="time" id="from" name="from" required>
                 <label for="to">To</label>
-                <input type="datetime-local" id="to" name="to" required>
+                <input type="time" id="to" name="to" required>
                 <br>
                 <button @click="addEntry" type="submit">Add</button>
             </form>
