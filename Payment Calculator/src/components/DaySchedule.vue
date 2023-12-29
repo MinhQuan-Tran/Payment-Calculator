@@ -97,6 +97,7 @@ export default {
         <dialog id="add-entry-dialog">
             <button class="close-btn" @click="closeAddEntryDialog">X</button>
             <h1>Add Entry</h1>
+            <span>{{ selectedDate.toDateString() }}</span>
             <form class="add-entry-dialog">
                 <label for="workplace">Workplace</label>
                 <input type="text" id="workplace" name="workplace" required>
@@ -171,6 +172,12 @@ export default {
     font-weight: bold;
 }
 
+dialog {
+    border: none;
+    outline: none;
+    border-radius: var(--border-radius);
+}
+
 button {
     background: none;
     border: none;
@@ -192,20 +199,15 @@ button {
     position: absolute;
     top: 0;
     right: 0;
-    background: none;
-    border: none;
-    outline: none;
-    cursor: pointer;
     padding: 0.5em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: transparent;
     user-select: none;
 }
 
 .add-entry-dialog {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
 }
 
 .add-entry-dialog label {
