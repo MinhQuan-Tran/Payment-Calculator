@@ -57,7 +57,7 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 0 0.2rem;
+    padding-right: 0.5rem;
 }
 
 .entry {
