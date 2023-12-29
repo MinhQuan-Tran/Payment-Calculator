@@ -209,7 +209,7 @@ export default {
 
 .prev-btn:hover,
 .next-btn:hover {
-    background-color: rgba(0, 204, 255, 0.15);
+    background-color: rgba(150, 218, 255, 0.3);
 }
 
 .prev-btn {
@@ -244,7 +244,7 @@ export default {
 }
 
 .week-total {
-    background-color: rgba(0, 188, 235, 0.3);
+    background-color: rgba(var(--primary-color), 1);
     border-top-left-radius: var(--border-radius);
     border-top-right-radius: var(--border-radius);
     border-bottom: 2px solid white;
@@ -253,7 +253,7 @@ export default {
 .total {
     text-align: left;
     justify-content: start;
-    background-color: rgba(0, 188, 235, 0.3);
+    background-color: rgba(var(--primary-color), 1);
     padding: 0 0.5rem;
 }
 
@@ -304,6 +304,6 @@ export default {
 }
 
 .selected {
-    background-color: rgba(0, 204, 255, 0.3) !important;
+    background-color: rgba(var(--primary-color), 1) !important;
 }
 </style>

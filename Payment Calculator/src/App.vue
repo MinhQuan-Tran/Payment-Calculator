@@ -110,6 +110,9 @@ export default {
     },
   },
   methods: {
+    addEntry(entry: Entry) {
+      this.entries.push(entry);
+    },
   },
   watch: {
     selectedEntry(entry: Entry | null) {
@@ -126,7 +129,7 @@ export default {
 <template>
   <WeekSchedule :entries="entries" v-model:selected-date="selectedDate" />
   <hr>
-  <DaySchedule :entries="selectedEntries" />
+  <DaySchedule :entries="selectedEntries" @add-entry="addEntry" />
 </template>
 
 <style scoped>
