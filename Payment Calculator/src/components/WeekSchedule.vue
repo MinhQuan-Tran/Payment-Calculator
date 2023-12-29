@@ -13,8 +13,12 @@ export default {
             type: Array as () => Entry[],
             required: true,
         },
+        selectedDate: {
+            type: Date,
+            required: true,
+        },
     },
-    emits: ["selectedEntries"],
+    emits: ["update:selectedDate"],
     data() {
         const today = new Date();
 
@@ -120,6 +124,11 @@ export default {
         },
         currencyFormat,
     },
+    watch: {
+        selectedDate() {
+            console.log(this.selectedDate)
+        },
+    },
     mounted() {
         this.updateTitleByMonth();
     },
@@ -143,8 +152,16 @@ export default {
 
             <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
                 <div v-for="(day, dayIndex) in week.days" :key="dayIndex">
-                    <div @click="$emit('selectedEntries', getEntriesForDay(day.date))"
-                        :class="[{ 'prev-month': day.prevMonth, 'next-month': day.nextMonth, 'has-entry': (getEntriesForDay(day.date).length > 0) }, 'day']">
+                    <div @click="$emit('update:selectedDate', day.date)" :class="[
+                        {
+                            'prev-month': day.prevMonth,
+                            'next-month': day.nextMonth,
+                            'has-entry': (getEntriesForDay(day.date).length > 0),
+                            // Compare the dates only
+                            'selected': selectedDate && selectedDate.setHours(0, 0, 0, 0) === day.date.setHours(0, 0, 0, 0),
+                        },
+                        'day'
+                    ]">
                         {{ day.day }}
                     </div>
                 </div>
@@ -260,11 +277,11 @@ export default {
 }
 
 .day:hover {
-    background-color: rgba(0, 204, 255, 0.15);
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
 .day:focus {
-    background-color: rgba(0, 204, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
 .prev-month,
@@ -284,5 +301,9 @@ export default {
     border-radius: 50%;
     background-color: green;
     margin: 0 auto;
+}
+
+.selected {
+    background-color: rgba(0, 204, 255, 0.3) !important;
 }
 </style>
