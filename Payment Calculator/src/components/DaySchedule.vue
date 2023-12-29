@@ -41,12 +41,12 @@ export default {
             }
         },
         addEntry(event: Event) {
-            event.preventDefault();
-
             const dialog = document.querySelector("dialog#add-entry-dialog") as HTMLDialogElement;
             if (dialog) {
                 const form = dialog.querySelector("form#add-entry-form") as HTMLFormElement;
-                if (form) {
+                if (form && form.checkValidity()) {
+                    event.preventDefault();
+
                     const formData = new FormData(form);
 
                     const from = new Date(this.selectedDate);
