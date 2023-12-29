@@ -213,4 +213,14 @@ button {
 #add-entry-form label {
     margin-top: 0.5em;
 }
+
+#add-entry-form input {
+    border: none;
+    outline: none;
+    border-radius: var(--border-radius);
+    background: rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.5em;
+}
 </style>
