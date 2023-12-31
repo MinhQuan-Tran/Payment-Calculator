@@ -126,7 +126,7 @@ export default {
     },
     watch: {
         selectedDate() {
-            console.log(this.selectedDate)
+            console.log(this.selectedDate);
         },
     },
     mounted() {

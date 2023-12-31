@@ -1,6 +1,6 @@
 <script lang="ts">
-import { type Entry } from '@/types'
-import { currencyFormat } from '@/utils'
+import { type Entry } from '@/types';
+import { currencyFormat } from '@/utils';
 
 export default {
   props: {
