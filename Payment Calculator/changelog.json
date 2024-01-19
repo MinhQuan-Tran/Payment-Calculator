@@ -10,5 +10,13 @@
       "Save and Load entries from localStorage",
       "Versioning"
     ]
+  },
+  {
+    "version": "0.1.1",
+    "date": "2024-01-19T00:00:00+1100",
+    "changes": [
+      "[Fix] Edit Entry popup not showing up when selecting an entry",
+      "[Fix] Edit Entry updates 'to' incorrectly"
+    ]
   }
 ]

@@ -42,7 +42,7 @@ export default {
                 workplace: this.formData.workplace,
                 payRate: this.formData.payRate,
                 from: this.toISOString(this.formData.from),
-                to: this.toISOString(this.formData.from)
+                to: this.toISOString(this.formData.to)
             } as Entry;
 
             const action = (document.activeElement as HTMLButtonElement)?.value;

@@ -52,7 +52,7 @@ export default {
     entryChange(payload: { action: string, entry: Entry; }) {
       this.$emit('entryChange', payload);
     },
-    selectEntry(entry: Entry) {
+    selectEntry(event: Event, entry: Entry) {
       this.selectedEntry = entry;
       (this.$refs.editEntryDialog as any).showModal();
     },
@@ -71,7 +71,7 @@ export default {
         } else {
           return 1;
         }
-      })" :key="entry.id" class="entry" @click="selectEntry(entry)">
+      })" :key="entry.id" class="entry" @click="selectEntry($event, entry)">
         <div class="time">
           <span>{{ toTime(entry.from) }}</span>
           <span>{{ toTime(entry.to) }}</span>
@@ -104,7 +104,7 @@ export default {
       <EntryForm :selected-date="selectedDate" @entry-change="entryChange" />
     </BaseDialog>
 
-    <BaseDialog ref="editEntry" title="Edit Entry" :reset-forms="true">
+    <BaseDialog ref="editEntryDialog" title="Edit Entry" :reset-forms="true">
       <EntryForm :selected-date="selectedDate" @entry-change="entryChange" :entry="selectedEntry" />
     </BaseDialog>
   </div>
