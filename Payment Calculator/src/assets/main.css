@@ -3,9 +3,12 @@
   font-size: large;
 
   --primary-color: 150, 218, 255;
-  --warning-color: 255, 75, 75;
+  --danger-color: 255, 75, 75;
+
+  --button-color: var(--primary-color);
 
   --border-radius: 5px;
+  --gap-horizontal: 0.5rem;
 }
 
 body {
@@ -16,25 +19,32 @@ body {
   width: 99vw;
 }
 
-dialog {
-  border: none;
-  outline: none;
-  border-radius: var(--border-radius);
-  width: clamp(300px, 80vw, 500px);
-  box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
-}
-
-dialog .content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-dialog .content form {
-  align-self: stretch;
+form {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+}
+
+input {
+  margin-bottom: 0.5em;
+}
+
+input:not([type='checkbox'], [type='radio']) {
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  background-color: inherit;
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5em;
+}
+
+input:focus {
+  outline: 2px solid rgba(var(--primary-color), 1);
+}
+
+label {
+  margin-top: 0.5em;
+  margin-left: var(--border-radius);
 }
 
 button {
@@ -51,11 +61,21 @@ button {
   padding: 0.5em;
   font-weight: bold;
   transition: all 0.3s ease-in-out;
-  background: rgba(var(--primary-color), 1);
+  background: rgba(var(--button-color), 1);
 }
 
 button:hover {
-  background: rgba(var(--primary-color), 0.8);
+  background: rgba(var(--button-color), 0.8);
+}
+
+form button[type='submit'] {
+  margin-top: 1rem;
+}
+
+.warning-btn {
+  --button-color: var(--danger-color) !important;
+  flex-shrink: 1 !important;
+  flex-grow: 0 !important;
 }
 
 #app {

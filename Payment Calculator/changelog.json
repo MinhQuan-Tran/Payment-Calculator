@@ -1,0 +1,14 @@
+[
+  {
+    "version": "0.1.0",
+    "date": "2024-01-19T00:00:00+1100",
+    "changes": [
+      "Initial Release",
+      "Add, Edit and Delete an Entry",
+      "Total payment for each week and each entry",
+      "Clear entries of the selected day, week or all entries",
+      "Save and Load entries from localStorage",
+      "Versioning"
+    ]
+  }
+]
