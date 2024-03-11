@@ -4,11 +4,21 @@ import { type Entry } from '@/types';
 export default {
     props: {
         entry: {
-            type: Object as () => Entry,
+            type: Object as () => {
+                id: number | undefined;
+                workplace: string | undefined;
+                payRate: number | undefined;
+                from: string | undefined;
+                to: string | undefined;
+            },
             default: undefined,
         },
         selectedDate: {
             type: Date,
+            required: true,
+        },
+        action: {
+            type: String,
             required: true,
         },
     },
@@ -18,24 +28,20 @@ export default {
                 id: this.entry?.id,
                 workplace: this.entry?.workplace,
                 payRate: this.entry?.payRate,
-                from: this.toHHmmString(this.entry?.from), // formData.from will be in the format of 'HH:mm'
-                to: this.toHHmmString(this.entry?.to),     // instead of Date object
-            } as Entry,
+                from: this.entry?.from ? this.toHHmmString(this.entry.from) : undefined, // formData.from will be in the format of 'HH:mm'
+                to: this.entry?.to ? this.toHHmmString(this.entry.to) : undefined,   // instead of Date object
+            },
         };
     },
     emits: {
         entryChange(payload: { action: string, entry: Entry; }) {
-            const actions = ['add', 'edit', 'delete'];
+            const actions = ['add', 'edit', 'delete', 'check in/out'];
             return actions.includes(payload.action);
         },
     },
     methods: {
         entryAction(event: Event) {
             const form = event.currentTarget as HTMLFormElement;
-
-            if (!form || !form.checkValidity()) {
-                throw new Error('Form is invalid');
-            }
 
             const entry = {
                 id: this.formData.id,
@@ -45,12 +51,29 @@ export default {
                 to: this.toISOString(this.formData.to)
             } as Entry;
 
-            const action = (document.activeElement as HTMLButtonElement)?.value;
+            let action = (document.activeElement as HTMLButtonElement)?.value;
 
-            if (action === 'delete') {
-                if (!confirm('Are you sure you want to delete this entry?\nThis action cannot be undone.')) {
-                    return;
-                }
+            switch (action) {
+                case 'add':
+                    if (entry) {
+                        action = 'check in/out';
+                    }
+                    break;
+                case 'edit':
+                    break;
+                case 'delete':
+                    if (!confirm('Are you sure you want to delete this entry?\nThis action cannot be undone.')) {
+                        return;
+                    }
+                    break;
+                case 'remove check in':
+                    if (!confirm('Are you sure you want to remove the check in time?\nThis action cannot be undone.')) {
+                        return;
+                    }
+                    break;
+                default:
+                    alert('Invalid action');
+                    throw new Error('Invalid action');
             }
 
             this.$emit('entryChange', {
@@ -82,14 +105,13 @@ export default {
             return date.toISOString();
         },
         resetForm() {
-            console.log('resetForm');
             this.formData = {
                 id: this.entry?.id,
                 workplace: this.entry?.workplace,
                 payRate: this.entry?.payRate,
-                from: this.toHHmmString(this.entry?.from),
-                to: this.toHHmmString(this.entry?.to),
-            } as Entry;
+                from: this.entry?.from ? this.toHHmmString(this.entry.from) : undefined,
+                to: this.entry?.to ? this.toHHmmString(this.entry.to) : undefined,
+            };
         },
     },
     watch: {
@@ -102,25 +124,36 @@ export default {
 
 <template>
     <form @submit.prevent="entryAction" @reset.prevent="resetForm">
-        <span class="selected-date">{{ selectedDate.toDateString() }}</span>
+        <span class="selected-date">
+            {{ selectedDate.toLocaleString(undefined, { dateStyle: 'full' }) }}
+        </span>
         <input type="hidden" name="id" v-if="entry" v-model="formData.id">
         <label for="workplace">Workplace</label>
         <input type="text" id="workplace" name="workplace" placeholder="e.g. PappaRich" v-model="formData.workplace"
             required />
         <label for="pay-rate">Pay Rate</label>
-        <input type="number" id="pay-rate" name="payRate" placeholder="e.g. 23.23" v-model="formData.payRate" step="0.01"
-            min="0" max="1000" required />
+        <input type="number" id="pay-rate" name="payRate" placeholder="e.g. 23.23" v-model="formData.payRate"
+            step="0.01" min="0" max="1000" required />
         <label for="from">From</label>
         <input type="time" id="from" name="from" v-model="formData.from" required />
         <label for="to">To</label>
         <input type="time" id="to" name="to" v-model="formData.to" required />
 
-        <div v-if="entry" class="actions">
-            <button type="submit" name="action" value="delete" class="warning-btn">Delete</button>
-            <button type="submit" name="action" value="edit">Edit Entry</button>
+        <div class="actions">
+            <template v-if="action == 'edit'">
+                <button type="submit" name="action" value="delete" class="warning-btn" formnovalidate>Delete</button>
+                <button type="submit" name="action" value="edit">Edit Entry</button>
+            </template>
+            <template v-else-if="action == 'add'">
+                <button type="submit" name="action" value="add">Add Entry</button>
+            </template>
+            <template v-else-if="action == 'check in/out'">
+                <button type="submit" name="action" value="remove check in" class="warning-btn" formnovalidate>
+                    Remove
+                </button>
+                <button type="submit" name="action" value="add">Add Entry</button>
+            </template>
         </div>
-
-        <button v-else type="submit" name="action" value="add">Add Entry</button>
     </form>
 </template>
 
@@ -139,5 +172,9 @@ export default {
 
 .actions button {
     flex: 1;
+}
+
+.actions .warning-btn {
+    flex-grow: 0;
 }
 </style>

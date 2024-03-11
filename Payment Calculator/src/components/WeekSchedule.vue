@@ -55,7 +55,7 @@ export default {
                         day: number,
                         date: Date,
                         prevMonth: boolean,
-                        nextMonth: boolean
+                        nextMonth: boolean;
                     }[],
                     total: 0,
                 };
@@ -305,5 +305,6 @@ export default {
 
 .selected {
     background-color: rgba(var(--primary-color), 1) !important;
+    font-weight: bold;
 }
 </style>

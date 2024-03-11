@@ -4,11 +4,11 @@
     "date": "2024-01-19T00:00:00+1100",
     "changes": [
       "Initial Release",
-      "Add, Edit and Delete an Entry",
-      "Total payment for each week and each entry",
-      "Clear entries of the selected day, week or all entries",
-      "Save and Load entries from localStorage",
-      "Versioning"
+      "[Feature] Add, Edit and Delete an Entry",
+      "[Feature] Total payment for each week and each entry",
+      "[Feature] Clear entries of the selected day, week or all entries",
+      "[Feature] Save and Load entries from localStorage",
+      "[Feature] Versioning"
     ]
   },
   {
@@ -18,5 +18,10 @@
       "[Fix] Edit Entry popup not showing up when selecting an entry",
       "[Fix] Edit Entry updates 'to' incorrectly"
     ]
+  },
+  {
+    "version": "0.2.0",
+    "date": "2024-03-11T00:00:00+1100",
+    "changes": ["[Feature] Check In/Out", "Optimised code", "Update changelog structure"]
   }
 ]
