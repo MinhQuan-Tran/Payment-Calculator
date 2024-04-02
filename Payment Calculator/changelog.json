@@ -22,6 +22,11 @@
   {
     "version": "0.2.0",
     "date": "2024-03-11T00:00:00+1100",
-    "changes": ["[Feature] Check In/Out", "Optimised code", "Update changelog structure"]
+    "changes": ["[Feature] Check In/Out", "Optimise code", "Update changelog structure"]
+  },
+  {
+    "version": "0.2.1",
+    "date": "2024-04-2T00:00:00+1100",
+    "changes": ["[Fix] Version does not update after closing the popup", "Add README.md"]
   }
 ]
