@@ -3,6 +3,7 @@
   font-size: large;
 
   --primary-color: 150, 218, 255;
+  --warning-color: 255, 255, 0;
   --danger-color: 255, 100, 100;
   --success-color: 100, 255, 100;
 
@@ -74,6 +75,10 @@ form button[type='submit'] {
 }
 
 .warning-btn {
+  --button-color: var(--warning-color) !important;
+}
+
+.danger-btn {
   --button-color: var(--danger-color) !important;
 }
 

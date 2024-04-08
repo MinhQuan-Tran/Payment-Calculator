@@ -1,34 +1,34 @@
 <script lang="ts">
-import { type Entry } from "@/types";
-import { currencyFormat } from "@/utils";
+import { type Entry } from '@/types';
+import { currencyFormat } from '@/utils';
 
 enum VIEW_MODE {
-    MONTH = "month",
-    WEEK = "week",
+    MONTH = 'month',
+    WEEK = 'week'
 }
 
 export default {
     props: {
         entries: {
             type: Array as () => Entry[],
-            required: true,
+            required: true
         },
         selectedDate: {
             type: Date,
-            required: true,
-        },
+            required: true
+        }
     },
-    emits: ["update:selectedDate"],
+    emits: ['update:selectedDate'],
     data() {
         const today = new Date();
 
         return {
-            title: "Week Schedule",
-            weekDays: ["M.", "Tu.", "W.", "Th.", "F", "Sa.", "Su."],
+            title: 'Week Schedule',
+            weekDays: ['M.', 'Tu.', 'W.', 'Th.', 'F', 'Sa.', 'Su.'],
             VIEW_MODE,
             view: VIEW_MODE.MONTH,
             today,
-            monthChange: 0,
+            monthChange: 0
         };
     },
     computed: {
@@ -37,13 +37,17 @@ export default {
             changedDate.setMonth(changedDate.getMonth() + this.monthChange);
 
             const firstDayOfMonth = new Date(changedDate.getFullYear(), changedDate.getMonth(), 1);
-            const lastDayOfMonth = new Date(firstDayOfMonth.getFullYear(), firstDayOfMonth.getMonth() + 1, 0);
+            const lastDayOfMonth = new Date(
+                firstDayOfMonth.getFullYear(),
+                firstDayOfMonth.getMonth() + 1,
+                0
+            );
             const firstDayOfWeek = firstDayOfMonth.getDay();
 
             let currentDate = new Date(firstDayOfMonth);
 
             // Set the date to the first day of the week (Monday)
-            // e.g. if the first day of the month is on Friday 1 December 2023, 
+            // e.g. if the first day of the month is on Friday 1 December 2023,
             // then the first day of the week is 1 December 2023 - 5 days = Sunday 26 November 2023
             // Sunday 26 November 2023 + 1 day = Monday 27 November 2023
             currentDate.setDate(currentDate.getDate() - firstDayOfWeek + 1);
@@ -52,12 +56,12 @@ export default {
             while (currentDate <= lastDayOfMonth) {
                 const week = {
                     days: [] as {
-                        day: number,
-                        date: Date,
-                        prevMonth: boolean,
+                        day: number;
+                        date: Date;
+                        prevMonth: boolean;
                         nextMonth: boolean;
                     }[],
-                    total: 0,
+                    total: 0
                 };
 
                 for (let i = 0; i < 7; i++) {
@@ -68,7 +72,7 @@ export default {
                         day: currentDate.getDate(),
                         date: new Date(currentDate),
                         prevMonth: isPrevMonth,
-                        nextMonth: isNextMonth,
+                        nextMonth: isNextMonth
                     });
 
                     week.total += this.getEntriesForDay(currentDate).reduce((acc, entry) => {
@@ -92,12 +96,12 @@ export default {
             }
 
             return calendar;
-        },
+        }
     },
     methods: {
         getEntriesForDay(date: Date) {
             // Filter entries for the given date
-            return this.entries.filter(entry => {
+            return this.entries.filter((entry) => {
                 const fromDate = new Date(entry.from);
                 const toDate = new Date(entry.to);
 
@@ -109,29 +113,33 @@ export default {
                 return fromDate.getTime() === date.getTime() || toDate.getTime() === date.getTime();
             });
         },
+
         updateTitleByMonth() {
             const date = new Date(this.today);
             date.setMonth(date.getMonth() + this.monthChange);
-            this.title = date.toLocaleString("default", { month: "long", year: "numeric" });
+            this.title = date.toLocaleString('default', { month: 'long', year: 'numeric' });
         },
+
         goToNextMonth() {
             this.monthChange++;
             this.updateTitleByMonth();
         },
+
         goToPrevMonth() {
             this.monthChange--;
             this.updateTitleByMonth();
         },
-        currencyFormat,
+
+        currencyFormat
     },
     watch: {
         selectedDate() {
             console.log(this.selectedDate);
-        },
+        }
     },
     mounted() {
         this.updateTitleByMonth();
-    },
+    }
 };
 </script>
 
@@ -139,11 +147,11 @@ export default {
     <div class="week-schedule">
         <div class="title">
             <button class="prev-btn" @click="goToPrevMonth">
-                <img src="@/components/icons/next.svg" alt="prev">
+                <img src="@/components/icons/next.svg" alt="prev" />
             </button>
             <b>{{ title }}</b>
             <button class="next-btn" @click="goToNextMonth">
-                <img src="@/components/icons/next.svg" alt="next">
+                <img src="@/components/icons/next.svg" alt="next" />
             </button>
         </div>
         <div class="calendar">
@@ -152,16 +160,22 @@ export default {
 
             <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
                 <div v-for="(day, dayIndex) in week.days" :key="dayIndex">
-                    <div @click="$emit('update:selectedDate', day.date)" :class="[
-                        {
-                            'prev-month': day.prevMonth,
-                            'next-month': day.nextMonth,
-                            'has-entry': (getEntriesForDay(day.date).length > 0),
-                            // Compare the dates only
-                            'selected': selectedDate && selectedDate.setHours(0, 0, 0, 0) === day.date.setHours(0, 0, 0, 0),
-                        },
-                        'day'
-                    ]">
+                    <div
+                        @click="$emit('update:selectedDate', day.date)"
+                        :class="[
+                            {
+                                'prev-month': day.prevMonth,
+                                'next-month': day.nextMonth,
+                                'has-entry': getEntriesForDay(day.date).length > 0,
+                                // Compare the dates only
+                                selected:
+                                    selectedDate &&
+                                    selectedDate.setHours(0, 0, 0, 0) ===
+                                        day.date.setHours(0, 0, 0, 0)
+                            },
+                            'day'
+                        ]"
+                    >
                         {{ day.day }}
                     </div>
                 </div>
@@ -224,7 +238,7 @@ export default {
     width: 100%;
 }
 
-.calendar>* {
+.calendar > * {
     user-select: none;
     display: flex;
     align-items: center;
@@ -290,7 +304,7 @@ export default {
 }
 
 .has-entry::after {
-    content: "";
+    content: '';
     position: absolute;
     bottom: 0rem;
     left: 50%;
