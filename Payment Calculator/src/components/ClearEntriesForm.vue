@@ -2,6 +2,8 @@
 import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
+import ButtonConfirm from './ButtonConfirm.vue';
+
 export default {
   props: {
     selectedDate: {
@@ -86,6 +88,9 @@ export default {
       const dialog = form.closest('dialog') as HTMLDialogElement;
       dialog?.close();
     }
+  },
+  components: {
+    ButtonConfirm
   }
 };
 </script>
@@ -127,7 +132,9 @@ export default {
       <label for="clear-option-all">All</label>
     </div>
 
-    <button type="submit">Clear Entries</button>
+    <div class="actions">
+      <ButtonConfirm type="submit">Clear</ButtonConfirm>
+    </div>
   </form>
 </template>
 
