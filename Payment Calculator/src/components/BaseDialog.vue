@@ -75,7 +75,7 @@ dialog {
 .header {
   display: flex;
   justify-content: space-between;
-  padding: 0 0.8rem;
+  padding: 0 var(--padding);
   font-size: 1.25em;
   line-height: 1.25em;
   align-items: center;
@@ -104,6 +104,6 @@ dialog {
 .content {
   flex: 1;
   overflow-y: auto;
-  padding: 0.8rem;
+  padding: var(--padding);
 }
 </style>

@@ -2,6 +2,8 @@
 import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
+import ButtonConfirm from './ButtonConfirm.vue';
+
 import type { Entry } from '@/types';
 
 export default {
@@ -74,9 +76,6 @@ export default {
           break;
 
         case 'delete':
-          if (!confirm('Are you sure you want to delete this entry?\nThis action cannot be undone.')) {
-            return;
-          }
           this.entries.splice(
             this.entries.findIndex((e) => e.id === entry.id),
             1
@@ -84,9 +83,6 @@ export default {
           break;
 
         case 'remove check in':
-          if (!confirm('Are you sure you want to remove the check in time?\nThis action cannot be undone.')) {
-            return;
-          }
           this.checkInTime = undefined;
           break;
 
@@ -94,11 +90,6 @@ export default {
           alert('Invalid action');
           throw new Error('Invalid action');
       }
-
-      this.$emit('entryChange', {
-        action: action,
-        entry
-      });
 
       form.reset();
 
@@ -138,7 +129,26 @@ export default {
         from: this.entry?.from ? this.toHHmmString(this.entry.from) : undefined,
         to: this.entry?.to ? this.toHHmmString(this.entry.to) : undefined
       };
+    },
+
+    focusButtonConfirm(isHolding: boolean) {
+      if (isHolding) {
+        console.log('Holding');
+
+        (this.$refs.actionBar as HTMLElement)
+          ?.querySelectorAll('*:not(.slider:has(.button-confirm:active))')
+          .forEach((el) => {
+            el.classList.add('hide');
+          });
+      } else {
+        (this.$refs.actionBar as HTMLElement)?.querySelectorAll('.hide').forEach((el) => {
+          el.classList.remove('hide');
+        });
+      }
     }
+  },
+  components: {
+    ButtonConfirm
   },
   watch: {
     entry() {
@@ -180,9 +190,18 @@ export default {
     <label for="to">To</label>
     <input type="time" id="to" name="to" v-model="formData.to" required />
 
-    <div class="actions">
+    <div ref="actionBar" class="actions">
       <template v-if="action == 'edit'">
-        <button type="submit" name="action" value="delete" class="danger-btn" formnovalidate>Delete</button>
+        <ButtonConfirm
+          @is-holding="focusButtonConfirm"
+          type="submit"
+          name="action"
+          value="delete"
+          class="danger-btn"
+          formnovalidate
+        >
+          Delete
+        </ButtonConfirm>
         <button type="submit" name="action" value="edit">Edit Entry</button>
       </template>
 
@@ -191,7 +210,16 @@ export default {
       </template>
 
       <template v-else-if="action == 'check in/out'">
-        <button type="submit" name="action" value="remove check in" class="danger-btn" formnovalidate>Remove</button>
+        <ButtonConfirm
+          @is-holding="focusButtonConfirm"
+          type="submit"
+          name="action"
+          value="remove check in"
+          class="danger-btn"
+          formnovalidate
+        >
+          Remove
+        </ButtonConfirm>
         <button type="submit" name="action" value="add">Add Entry</button>
       </template>
     </div>
@@ -205,10 +233,13 @@ export default {
 }
 
 .actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--gap-horizontal);
+  transition: gap 0.3s ease;
+}
+
+.actions > * {
+  max-width: 100%;
+  overflow: hidden;
+  transition: max-width 0.3s ease;
 }
 
 .actions button {
@@ -217,5 +248,14 @@ export default {
 
 .actions .danger-btn {
   flex-grow: 0;
+}
+
+.actions:has(.hide) {
+  gap: 0;
+}
+
+.hide {
+  max-width: 0;
+  padding: 0;
 }
 </style>

@@ -75,7 +75,6 @@ export default {
 
     handleCheckInOut() {
       if (!this.isCheckIn) {
-        alert('Checked in!');
         this.userDataStore.checkInTime = new Date();
         return;
       }
@@ -221,7 +220,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 0 0.35rem;
+  padding: 0 var(--padding);
 }
 
 .entry-list .entry {

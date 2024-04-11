@@ -11,12 +11,14 @@
 
   --border-radius: 5px;
   --gap-horizontal: 0.5rem;
+
+  --padding: 0.8rem;
 }
 
 body {
   box-sizing: border-box;
   margin: auto;
-  padding: 8px;
+  padding: var(--padding);
   height: 99vh;
   width: 99vw;
 }
@@ -54,7 +56,6 @@ button {
   border: none;
   outline: none;
   cursor: pointer;
-  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -70,10 +71,6 @@ button:hover {
   background: rgba(var(--button-color), 0.8);
 }
 
-form button[type='submit'] {
-  margin-top: 1rem;
-}
-
 .warning-btn {
   --button-color: var(--warning-color) !important;
 }
@@ -84,6 +81,16 @@ form button[type='submit'] {
 
 .success-btn {
   --button-color: var(--success-color) !important;
+}
+
+form .actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: var(--gap-horizontal);
+  margin-top: var(--padding);
+  text-wrap: nowrap;
 }
 
 #app {
