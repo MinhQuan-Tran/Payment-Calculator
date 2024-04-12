@@ -59,7 +59,7 @@ export default {
         to: this.toISOString(this.formData.to)
       } as Entry;
 
-      let action = (document.activeElement as HTMLButtonElement)?.value;
+      let action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
 
       switch (action) {
         case 'add':
@@ -133,10 +133,8 @@ export default {
 
     focusButtonConfirm(isHolding: boolean) {
       if (isHolding) {
-        console.log('Holding');
-
         (this.$refs.actionBar as HTMLElement)
-          ?.querySelectorAll('*:not(.slider:has(.button-confirm:active))')
+          ?.querySelectorAll('*:not(.slider:has(.button-confirm.active))')
           .forEach((el) => {
             el.classList.add('hide');
           });
