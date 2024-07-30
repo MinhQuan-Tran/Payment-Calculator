@@ -8,16 +8,7 @@ import type { Entry } from '@/types';
 
 export default {
   props: {
-    entry: {
-      type: Object as () => {
-        id: number | undefined;
-        workplace: string | undefined;
-        payRate: number | undefined;
-        from: string | undefined;
-        to: string | undefined;
-      },
-      default: undefined
-    },
+    entry: Object as () => Partial<Entry>,
     selectedDate: {
       type: Date,
       required: true
@@ -33,13 +24,14 @@ export default {
         id: this.entry?.id,
         workplace: this.entry?.workplace,
         payRate: this.entry?.payRate,
-        from: this.entry?.from ? this.toHHmmString(this.entry.from) : undefined, // formData.from will be in the format of 'HH:mm'
-        to: this.entry?.to ? this.toHHmmString(this.entry.to) : undefined // instead of Date object
-      }
+        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
+      },
+      hiddenElements: [] as Element[]
     };
   },
   computed: {
-    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime'])
+    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos'])
   },
   emits: {
     entryChange(payload: { action: string; entry: Entry }) {
@@ -55,8 +47,18 @@ export default {
         id: this.formData.id,
         workplace: this.formData.workplace,
         payRate: this.formData.payRate,
-        from: this.toISOString(this.formData.from),
-        to: this.toISOString(this.formData.to)
+        from: new Date(
+          this.selectedDate.setHours(
+            parseInt(this.formData.from?.split(':')[0] || ''),
+            parseInt(this.formData.from?.split(':')[1] || '')
+          )
+        ),
+        to: new Date(
+          this.selectedDate.setHours(
+            parseInt(this.formData.to?.split(':')[0] || ''),
+            parseInt(this.formData.to?.split(':')[1] || '')
+          )
+        )
       } as Entry;
 
       let action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
@@ -65,6 +67,8 @@ export default {
         case 'add':
           entry.id = this.entries.length + 1;
           this.entries.push(entry);
+          this.prevWorkInfos[entry.workplace] = this.prevWorkInfos[entry.workplace] || { payRate: [] };
+          this.prevWorkInfos[entry.workplace].payRate.push(entry.payRate);
           break;
 
         case 'edit':
@@ -97,51 +101,30 @@ export default {
       dialog?.close();
     },
 
-    toHHmmString(ISOString: string | undefined) {
-      if (!ISOString) {
-        return '00:00';
-      }
-
-      const date = new Date(ISOString);
-      return date.toLocaleTimeString('en-AU', {
-        hourCycle: 'h23',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    },
-
-    toISOString(HHmmString: string | undefined) {
-      if (!HHmmString) {
-        return undefined;
-      }
-
-      const date = new Date(this.selectedDate);
-      const [hours, minutes] = HHmmString.split(':').map(Number);
-      date.setHours(hours, minutes, 0, 0);
-      return date.toISOString();
-    },
-
     resetForm() {
       this.formData = {
         id: this.entry?.id,
         workplace: this.entry?.workplace,
         payRate: this.entry?.payRate,
-        from: this.entry?.from ? this.toHHmmString(this.entry.from) : undefined,
-        to: this.entry?.to ? this.toHHmmString(this.entry.to) : undefined
+        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
+        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
       };
     },
 
     focusButtonConfirm(isHolding: boolean) {
       if (isHolding) {
+        // Hide all elements except this button and the bar
         (this.$refs.actionBar as HTMLElement)
           ?.querySelectorAll('*:not(.slider:has(.button-confirm.active))')
           .forEach((el) => {
+            this.hiddenElements.push(el);
             el.classList.add('hide');
           });
       } else {
-        (this.$refs.actionBar as HTMLElement)?.querySelectorAll('.hide').forEach((el) => {
+        this.hiddenElements.forEach((el) => {
           el.classList.remove('hide');
         });
+        this.hiddenElements = [];
       }
     }
   },
@@ -162,31 +145,57 @@ export default {
       {{ selectedDate.toLocaleString(undefined, { dateStyle: 'full' }) }}
     </span>
     <input type="hidden" name="id" v-if="entry" v-model="formData.id" />
-    <label for="workplace">Workplace</label>
-    <input
-      type="text"
-      id="workplace"
-      name="workplace"
-      placeholder="e.g. RestaurantName"
-      v-model="formData.workplace"
-      required
-    />
-    <label for="pay-rate">Pay Rate</label>
-    <input
-      type="number"
-      id="pay-rate"
-      name="payRate"
-      placeholder="e.g. 23.23"
-      v-model="formData.payRate"
-      step="0.01"
-      min="0"
-      max="1000"
-      required
-    />
-    <label for="from">From</label>
-    <input type="time" id="from" name="from" v-model="formData.from" required />
-    <label for="to">To</label>
-    <input type="time" id="to" name="to" v-model="formData.to" required />
+
+    <fieldset>
+      <label for="workplace">Workplace</label>
+      <div class="input-field">
+        <input
+          type="text"
+          id="workplace"
+          name="workplace"
+          placeholder="e.g. RestaurantName"
+          v-model="formData.workplace"
+          required
+          list="workplace-list"
+          autocomplete="off"
+        />
+        <div class="datalist" id="workplace-list">
+          <div v-for="(workInfo, workplace) in prevWorkInfos" :key="workplace" :value="workplace" class="item">
+            {{ workplace }}
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <label for="pay-rate">Pay Rate</label>
+      <input
+        type="number"
+        id="pay-rate"
+        name="payRate"
+        placeholder="e.g. 23.23"
+        v-model="formData.payRate"
+        step="0.01"
+        min="0"
+        max="1000"
+        required
+        list="pay-rate-list"
+        autocomplete="off"
+      />
+      <datalist id="pay-rate-list" v-if="formData.workplace">
+        <option v-for="rate in prevWorkInfos[formData.workplace].payRate" :key="rate" :value="rate"></option>
+      </datalist>
+    </fieldset>
+
+    <fieldset>
+      <label for="from">From</label>
+      <input type="time" id="from" name="from" v-model="formData.from" required />
+    </fieldset>
+
+    <fieldset>
+      <label for="to">To</label>
+      <input type="time" id="to" name="to" v-model="formData.to" required />
+    </fieldset>
 
     <div ref="actionBar" class="actions">
       <template v-if="action == 'edit'">
@@ -228,6 +237,48 @@ export default {
 .selected-date {
   display: block;
   text-align: center;
+}
+
+fieldset {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--border-radius);
+  border: none;
+  padding: var(--padding-small) 0;
+  margin: 0;
+}
+
+fieldset > * {
+  flex: 1;
+}
+
+.input-field {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--text-color-faded);
+}
+
+.datalist {
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--padding-small);
+  font-size: inherit;
+  display: none;
+}
+
+.input-field:focus-within .datalist {
+  display: block;
+}
+
+.datalist .item {
+  border-radius: var(--border-radius);
+  padding: var(--padding-small) var(--padding);
+  cursor: pointer;
+}
+
+.datalist .item:hover {
+  background-color: var(--hover-overlay);
 }
 
 .actions {

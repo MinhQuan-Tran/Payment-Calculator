@@ -1,6 +1,6 @@
 <script lang="ts">
-import { type Entry } from '@/types';
-import { currencyFormat } from '@/utils';
+import type { Entry, WorkInfos } from '@/types';
+import { currencyFormat, toTimeStr } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -11,9 +11,7 @@ import EntryForm from '@/components/EntryForm.vue';
 
 export default {
   props: {
-    entries: {
-      type: Array as () => Entry[]
-    },
+    entries: Array as () => Entry[],
     selectedDate: {
       type: Date,
       required: true
@@ -28,11 +26,11 @@ export default {
         action: '',
         placeholderEntry: undefined as
           | {
-              id: number | undefined;
-              workplace: string | undefined;
-              payRate: number | undefined;
-              from: string | undefined;
-              to: string;
+              id?: number;
+              workplace?: string;
+              payRate?: number;
+              from?: Date;
+              to?: Date;
             }
           | undefined
       }
@@ -40,19 +38,11 @@ export default {
   },
   methods: {
     currencyFormat,
-
-    toTime(dateStr: string) {
-      const date = new Date(dateStr);
-      return date.toLocaleTimeString('en-AU', {
-        hour12: true,
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-    },
+    toTimeStr,
 
     hourDiff(entry: Entry) {
-      const fromTime = new Date(entry.from).getTime();
-      const toTime = new Date(entry.to).getTime();
+      const fromTime = entry.from.getTime();
+      const toTime = entry.to.getTime();
       const diff = toTime - fromTime;
       return diff / 1000 / 60 / 60;
     },
@@ -96,8 +86,8 @@ export default {
             id: undefined,
             workplace: undefined,
             payRate: undefined,
-            from: this.userDataStore.checkInTime.toISOString(),
-            to: new Date().toISOString()
+            from: this.userDataStore.checkInTime,
+            to: new Date()
           }
         };
 
@@ -172,8 +162,8 @@ export default {
         @click="handleEditEntry(entry)"
       >
         <div class="time">
-          <span>{{ toTime(entry.from) }}</span>
-          <span>{{ toTime(entry.to) }}</span>
+          <span>{{ toTimeStr(entry.from) }}</span>
+          <span>{{ toTimeStr(entry.to) }}</span>
         </div>
         <div class="divider"></div>
         <div class="info">

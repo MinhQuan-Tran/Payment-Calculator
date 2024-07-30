@@ -207,16 +207,21 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--border-radius);
   height: 32px;
   width: 32px;
   transition: all 0.3s ease-in-out;
   user-select: none;
 }
 
-.prev-btn:hover,
-.next-btn:hover {
-  background-color: rgba(150, 218, 255, 0.3);
+.prev-btn:hover::before,
+.next-btn:hover::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  height: 32px;
+  width: 32px;
+  background-color: var(--primary-color);
+  opacity: 0.8;
 }
 
 .prev-btn {
@@ -247,21 +252,23 @@ export default {
 }
 
 .week-day {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--text-color-faded);
 }
 
 .week-total {
-  background-color: rgba(var(--primary-color), 1);
+  background-color: var(--primary-color);
   border-top-left-radius: var(--border-radius);
   border-top-right-radius: var(--border-radius);
-  border-bottom: 2px solid white;
+  border-bottom: 2px solid var(--background-color);
+  color: var(--text-color-black);
 }
 
 .total {
   text-align: left;
   justify-content: start;
-  background-color: rgba(var(--primary-color), 1);
+  background-color: var(--primary-color);
   padding: 0 var(--padding);
+  color: var(--text-color-black);
 }
 
 .total:last-child {
@@ -283,17 +290,14 @@ export default {
   background: none;
 }
 
-.day:hover {
-  background-color: rgba(0, 0, 0, 0.15);
-}
-
+.day:hover,
 .day:focus {
-  background-color: rgba(0, 0, 0, 0.15);
+  background-color: var(--hover-overlay);
 }
 
 .prev-month,
 .next-month {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--text-color-faded);
 }
 
 .has-entry::after {
@@ -311,7 +315,8 @@ export default {
 }
 
 .selected {
-  background-color: rgba(var(--primary-color), 1) !important;
+  background-color: var(--primary-color) !important;
+  color: var(--text-color-black);
   font-weight: bold;
 }
 </style>
