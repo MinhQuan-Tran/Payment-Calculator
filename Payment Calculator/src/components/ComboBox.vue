@@ -1,52 +1,60 @@
 <script lang="ts">
-export default {};
+export default {
+  props: {
+    value: String,
+    list: Array<String>
+  },
+  computed: {
+    filteredList() {
+      if (!this.value) return this.list || [];
+
+      return this.list?.filter((item) => item.toLowerCase().includes(this.value!.toLowerCase())) || [];
+    }
+  },
+  updated() {
+    const slot = this.$refs.slot as HTMLElement;
+    const datalist = this.$refs.datalist as HTMLElement;
+
+    if (datalist) datalist.style.paddingTop = `calc(${slot.getBoundingClientRect().height}px + var(--padding-small))`;
+  }
+};
 </script>
 
 <template>
-  <fieldset>
-    <label for="input">{{ label }}</label>
-    <div class="input-field">
-      <input
-        type="text"
-        id="input"
-        name="workplace"
-        placeholder="e.g. RestaurantName"
-        v-model="formData.workplace"
-        required
-        list="workplace-list"
-        autocomplete="off"
-      />
-      <div class="datalist" id="workplace-list">
-        <div v-for="(workInfo, workplace) in prevWorkInfos" :key="workplace" :value="workplace" class="item">
-          {{ workplace }}
-        </div>
+  <div class="input-field">
+    <div ref="slot">
+      <slot></slot>
+    </div>
+
+    <div ref="datalist" class="datalist" v-if="filteredList.length > 0">
+      <div
+        v-for="(itemName, index) in filteredList"
+        :key="index"
+        class="item"
+        @mousedown="$emit('update:value', itemName)"
+      >
+        {{ itemName }}
       </div>
     </div>
-  </fieldset>
+  </div>
 </template>
 
 <style scoped>
-fieldset {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--border-radius);
-  border: none;
-  padding: var(--padding-small) 0;
-  margin: 0;
-}
-
-fieldset > * {
-  flex: 1;
-}
-
 .input-field {
+  position: relative;
   border-radius: var(--border-radius);
-  border: 1px solid var(--text-color-faded);
+}
+
+.input-field:focus-within {
+  z-index: 1;
 }
 
 .datalist {
+  position: absolute;
+  top: 0;
+  z-index: -1;
   border-radius: var(--border-radius);
+  border: 1px solid var(--text-color-faded);
   box-sizing: border-box;
   width: 100%;
   padding: var(--padding-small);

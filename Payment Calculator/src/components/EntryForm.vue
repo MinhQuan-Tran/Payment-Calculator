@@ -3,6 +3,7 @@ import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
 import ButtonConfirm from './ButtonConfirm.vue';
+import ComboBox from './ComboBox.vue';
 
 import type { Entry } from '@/types';
 
@@ -129,7 +130,8 @@ export default {
     }
   },
   components: {
-    ButtonConfirm
+    ButtonConfirm,
+    ComboBox
   },
   watch: {
     entry() {
@@ -146,9 +148,15 @@ export default {
     </span>
     <input type="hidden" name="id" v-if="entry" v-model="formData.id" />
 
+    <!-- Not using 'for' in label to let user clicks on it to lose focus of the input -->
+
     <fieldset>
-      <label for="workplace">Workplace</label>
-      <div class="input-field">
+      <label>Workplace</label>
+      <ComboBox
+        :value="formData.workplace"
+        @update:value="(newValue) => (formData.workplace = newValue)"
+        :list="Object.keys(prevWorkInfos)"
+      >
         <input
           type="text"
           id="workplace"
@@ -159,41 +167,39 @@ export default {
           list="workplace-list"
           autocomplete="off"
         />
-        <div class="datalist" id="workplace-list">
-          <div v-for="(workInfo, workplace) in prevWorkInfos" :key="workplace" :value="workplace" class="item">
-            {{ workplace }}
-          </div>
-        </div>
-      </div>
+      </ComboBox>
     </fieldset>
 
     <fieldset>
-      <label for="pay-rate">Pay Rate</label>
-      <input
-        type="number"
-        id="pay-rate"
-        name="payRate"
-        placeholder="e.g. 23.23"
-        v-model="formData.payRate"
-        step="0.01"
-        min="0"
-        max="1000"
-        required
-        list="pay-rate-list"
-        autocomplete="off"
-      />
-      <datalist id="pay-rate-list" v-if="formData.workplace">
-        <option v-for="rate in prevWorkInfos[formData.workplace].payRate" :key="rate" :value="rate"></option>
-      </datalist>
+      <label>Pay Rate</label>
+      <ComboBox
+        :value="formData.payRate ? formData.payRate.toString() : ''"
+        @update:value="(newValue: number | undefined) => (formData.payRate = newValue)"
+        :list="formData.workplace ? prevWorkInfos[formData.workplace]?.payRate.map((pr) => pr.toString()) : []"
+      >
+        <input
+          type="number"
+          id="pay-rate"
+          name="payRate"
+          placeholder="e.g. 23.23"
+          v-model="formData.payRate"
+          step="0.01"
+          min="0"
+          max="1000"
+          required
+          list="pay-rate-list"
+          autocomplete="off"
+        />
+      </ComboBox>
     </fieldset>
 
     <fieldset>
-      <label for="from">From</label>
+      <label>From</label>
       <input type="time" id="from" name="from" v-model="formData.from" required />
     </fieldset>
 
     <fieldset>
-      <label for="to">To</label>
+      <label>To</label>
       <input type="time" id="to" name="to" v-model="formData.to" required />
     </fieldset>
 
@@ -237,48 +243,6 @@ export default {
 .selected-date {
   display: block;
   text-align: center;
-}
-
-fieldset {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--border-radius);
-  border: none;
-  padding: var(--padding-small) 0;
-  margin: 0;
-}
-
-fieldset > * {
-  flex: 1;
-}
-
-.input-field {
-  border-radius: var(--border-radius);
-  border: 1px solid var(--text-color-faded);
-}
-
-.datalist {
-  border-radius: var(--border-radius);
-  box-sizing: border-box;
-  width: 100%;
-  padding: var(--padding-small);
-  font-size: inherit;
-  display: none;
-}
-
-.input-field:focus-within .datalist {
-  display: block;
-}
-
-.datalist .item {
-  border-radius: var(--border-radius);
-  padding: var(--padding-small) var(--padding);
-  cursor: pointer;
-}
-
-.datalist .item:hover {
-  background-color: var(--hover-overlay);
 }
 
 .actions {

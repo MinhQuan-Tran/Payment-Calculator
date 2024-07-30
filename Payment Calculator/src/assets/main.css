@@ -43,6 +43,20 @@ form {
   align-items: stretch;
 }
 
+fieldset {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--border-radius);
+  border: none;
+  padding: var(--padding-small) 0;
+  margin: 0;
+}
+
+fieldset > * {
+  flex: 1;
+}
+
 input {
   font-size: large;
 }
@@ -51,9 +65,10 @@ input:not([type='checkbox'], [type='radio']) {
   border: none;
   background-color: inherit;
   border-radius: var(--border-radius);
+  border: 1px solid var(--text-color-faded);
   box-sizing: border-box;
   width: 100%;
-  padding: 0.5em;
+  padding: var(--padding);
 }
 
 input:focus {
