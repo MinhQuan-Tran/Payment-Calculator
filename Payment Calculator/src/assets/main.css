@@ -8,7 +8,8 @@
   --success-color: #64ff64;
 
   --background-color: light-dark(#fff, #272727);
-  --popup-background-color: light-dark(#ececec, #353535);
+  --popup-background-color: light-dark(#fff, #353535);
+  --datalist-background-color: light-dark(#fafafa, #424242);
   --button-color: var(--primary-color);
   --text-color-white: #fff;
   --text-color-black: #000;
@@ -98,6 +99,21 @@ button {
 
 button:hover {
   opacity: 0.8;
+}
+
+.icons8-close {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  --close-icon: url('./icons8-close-black.svg');
+  background: var(--close-icon) 50% 50% no-repeat;
+  background-size: 100%;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  .icons8-close {
+    --close-icon: url('./icons8-close-white.svg');
+  }
 }
 
 .warning-btn {

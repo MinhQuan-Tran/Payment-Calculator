@@ -8,6 +8,6 @@ export type Entry = {
 
 export type WorkInfos = {
   [workplace: string]: {
-    payRate: number[];
+    payRate: Set<number>;
   };
 };

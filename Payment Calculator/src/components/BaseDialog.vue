@@ -41,7 +41,7 @@ export default {
     <div class="dialog">
       <div class="header">
         <b class="title">{{ title }}</b>
-        <button class="close-btn" @click="closeDialog">✕</button>
+        <button class="close-btn" @click="closeDialog"><div class="icons8-close"></div></button>
         <!-- TODO: Use icon or CSS instead of text -->
       </div>
       <div class="divider"></div>

@@ -68,8 +68,14 @@ export default {
         case 'add':
           entry.id = this.entries.length + 1;
           this.entries.push(entry);
-          this.prevWorkInfos[entry.workplace] = this.prevWorkInfos[entry.workplace] || { payRate: [] };
-          this.prevWorkInfos[entry.workplace].payRate.push(entry.payRate);
+
+          if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
+            this.prevWorkInfos[entry.workplace].payRate.add(entry.payRate);
+          } else {
+            this.prevWorkInfos[entry.workplace] = {
+              payRate: new Set<number>([entry.payRate])
+            };
+          }
           break;
 
         case 'edit':
@@ -156,6 +162,8 @@ export default {
         :value="formData.workplace"
         @update:value="(newValue) => (formData.workplace = newValue)"
         :list="Object.keys(prevWorkInfos)"
+        @delete-item="prevWorkInfos[$event] && delete prevWorkInfos[$event]"
+        deletable
       >
         <input
           type="text"
@@ -175,7 +183,13 @@ export default {
       <ComboBox
         :value="formData.payRate ? formData.payRate.toString() : ''"
         @update:value="(newValue: number | undefined) => (formData.payRate = newValue)"
-        :list="formData.workplace ? prevWorkInfos[formData.workplace]?.payRate.map((pr) => pr.toString()) : []"
+        :list="
+          formData.workplace && prevWorkInfos[formData.workplace]?.payRate
+            ? Array.from(prevWorkInfos[formData.workplace]?.payRate).map((pr) => pr.toString())
+            : []
+        "
+        @delete-item="formData.workplace && prevWorkInfos[formData.workplace]?.payRate?.delete(parseFloat($event))"
+        deletable
       >
         <input
           type="number"
