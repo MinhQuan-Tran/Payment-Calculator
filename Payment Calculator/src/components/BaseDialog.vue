@@ -41,7 +41,7 @@ export default {
     <div class="dialog">
       <div class="header">
         <b class="title">{{ title }}</b>
-        <button class="close-btn" @click="closeDialog">X</button>
+        <button class="close-btn" @click="closeDialog"><div class="icons8-close"></div></button>
       </div>
       <div class="divider"></div>
       <div class="content">
@@ -56,11 +56,25 @@ dialog {
   border: none;
   outline: none;
   border-radius: var(--border-radius);
-  width: clamp(300px, 85vw, 500px);
-  max-height: 90vh;
+  background-color: var(--popup-background-color);
+  width: clamp(300px, 85dvw, 500px);
+  max-height: 90dvh;
   overflow-y: hidden;
   box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
   padding: 0;
+}
+
+dialog::backdrop {
+  animation: dialog-backdrop 0.3s ease forwards;
+}
+
+@keyframes dialog-backdrop {
+  from {
+    backdrop-filter: blur(0);
+  }
+  to {
+    backdrop-filter: blur(5px);
+  }
 }
 
 /* To select and change the display of the dialog div, not interfering with the Core dialog display */
@@ -75,7 +89,7 @@ dialog {
 .header {
   display: flex;
   justify-content: space-between;
-  padding: 0 var(--padding);
+  padding: 0;
   font-size: 1.25em;
   line-height: 1.25em;
   align-items: center;
@@ -84,6 +98,7 @@ dialog {
 .title {
   text-align: left;
   margin: 0;
+  margin-left: var(--padding);
 }
 
 .close-btn {
@@ -92,13 +107,15 @@ dialog {
   font-weight: normal;
   background: transparent;
   user-select: none;
+  color: var(--text-color);
+  width: auto;
 }
 
 .divider {
   width: 100%;
   height: 2px;
   flex-shrink: 0;
-  background-color: rgb(var(--primary-color));
+  background-color: var(--primary-color);
 }
 
 .content {

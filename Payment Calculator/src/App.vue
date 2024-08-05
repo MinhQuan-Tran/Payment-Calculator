@@ -1,7 +1,7 @@
 <script lang="ts">
 import packageJson from '@/../package.json';
 import changelog from '@/../changelog.json';
-import { type Entry } from '@/types';
+import type { Entry } from '@/types';
 import { version } from 'vue';
 
 import { mapStores } from 'pinia';
@@ -28,9 +28,7 @@ export default {
         .filter((log: { version: string; date: string; changes: string[] }) => {
           // Compare version numbers within currentVersion and change.version
           const latestVersion = version.split('.').map(Number);
-          const currentVersion = localStorage.getItem('appVersion')?.split('.').map(Number) || [
-            0, 0, 0
-          ];
+          const currentVersion = localStorage.getItem('appVersion')?.split('.').map(Number) || [0, 0, 0];
           const logVersion = log.version.split('.').map(Number);
 
           for (let i = 0; i < logVersion.length; i++) {
@@ -107,7 +105,7 @@ export default {
 
 <style scoped>
 hr {
-  margin: 0.8rem;
+  margin: var(--padding);
 }
 
 .what-new {
@@ -119,10 +117,10 @@ hr {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  margin: 0 var(--padding);
 }
 
 .what-new .version {
   margin: 0;
 }
 </style>
-./stores/userData

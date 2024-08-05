@@ -1,22 +1,37 @@
 :root {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: large;
+  color-scheme: light dark;
 
-  --primary-color: 150, 218, 255;
-  --warning-color: 255, 255, 0;
-  --danger-color: 255, 100, 100;
-  --success-color: 100, 255, 100;
+  --primary-color: #82d2fd;
+  --warning-color: #ffff00;
+  --danger-color: #ff6464;
+  --success-color: #64ff64;
 
+  --background-color: light-dark(#fafafa, #272727);
+  --popup-background-color: light-dark(#fff, #303030);
+  --input-background-color: light-dark(#f0f0f0, #414141);
   --button-color: var(--primary-color);
+  --text-color-white: #fff;
+  --text-color-black: #000;
+  --text-color: light-dark(var(--text-color-black), var(--text-color-white));
+  --text-color-opposite: light-dark(var(--text-color-white), var(--text-color-black));
+  --text-color-faded: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
+  --hover-overlay: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
 
   --border-radius: 5px;
   --gap-horizontal: 0.5rem;
 
-  --padding: 0.8rem;
+  --padding: 0.5em;
+  --padding-small: 0.25em;
+}
+
+* {
+  background-color: inherit;
 }
 
 body {
   box-sizing: border-box;
+  background-color: var(--background-color);
   margin: auto;
   padding: var(--padding);
   height: 99vh;
@@ -30,29 +45,28 @@ form {
 }
 
 input {
-  margin-bottom: 0.5em;
+  font-size: large;
 }
 
 input:not([type='checkbox'], [type='radio']) {
-  border: 1px solid rgba(0, 0, 0, 0.5);
-  background-color: inherit;
+  border: none;
+  background-color: var(--input-background-color);
   border-radius: var(--border-radius);
   box-sizing: border-box;
   width: 100%;
-  padding: 0.5em;
+  padding: var(--padding);
 }
 
 input:focus {
-  outline: 2px solid rgba(var(--primary-color), 1);
+  outline: 2px solid var(--primary-color);
 }
 
 label {
-  margin-top: 0.5em;
+  margin-bottom: 0.2em;
   margin-left: var(--border-radius);
 }
 
 button {
-  background: none;
   border: none;
   outline: none;
   cursor: pointer;
@@ -64,11 +78,27 @@ button {
   padding: 0.5em;
   font-weight: bold;
   transition: all 0.3s ease-in-out;
-  background: rgba(var(--button-color), 1);
+  background: var(--button-color);
+  color: var(--text-color-black);
 }
 
 button:hover {
-  background: rgba(var(--button-color), 0.8);
+  opacity: 0.8;
+}
+
+.icons8-close {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  --close-icon: url('./icons8-close-black.svg');
+  background: var(--close-icon) 50% 50% no-repeat;
+  background-size: 100%;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  .icons8-close {
+    --close-icon: url('./icons8-close-white.svg');
+  }
 }
 
 .warning-btn {

@@ -1,6 +1,6 @@
 <script lang="ts">
-import { type Entry } from '@/types';
-import { currencyFormat } from '@/utils';
+import type { Entry, WorkInfos } from '@/types';
+import { currencyFormat, toTimeStr } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -11,9 +11,7 @@ import EntryForm from '@/components/EntryForm.vue';
 
 export default {
   props: {
-    entries: {
-      type: Array as () => Entry[]
-    },
+    entries: Array as () => Entry[],
     selectedDate: {
       type: Date,
       required: true
@@ -28,31 +26,24 @@ export default {
         action: '',
         placeholderEntry: undefined as
           | {
-              id: number | undefined;
-              workplace: string | undefined;
-              payRate: number | undefined;
-              from: string | undefined;
-              to: string;
+              id?: number;
+              workplace?: string;
+              payRate?: number;
+              from?: Date;
+              to?: Date;
             }
           | undefined
-      }
+      },
+      timeWidth: 'auto'
     };
   },
   methods: {
     currencyFormat,
-
-    toTime(dateStr: string) {
-      const date = new Date(dateStr);
-      return date.toLocaleTimeString('en-AU', {
-        hour12: true,
-        hour: 'numeric',
-        minute: '2-digit'
-      });
-    },
+    toTimeStr,
 
     hourDiff(entry: Entry) {
-      const fromTime = new Date(entry.from).getTime();
-      const toTime = new Date(entry.to).getTime();
+      const fromTime = entry.from.getTime();
+      const toTime = entry.to.getTime();
       const diff = toTime - fromTime;
       return diff / 1000 / 60 / 60;
     },
@@ -96,8 +87,8 @@ export default {
             id: undefined,
             workplace: undefined,
             payRate: undefined,
-            from: this.userDataStore.checkInTime.toISOString(),
-            to: new Date().toISOString()
+            from: this.userDataStore.checkInTime,
+            to: new Date()
           }
         };
 
@@ -127,6 +118,17 @@ export default {
         placeholderEntry: undefined
       };
       (this.$refs.entryDialog as any).showModal();
+    },
+
+    updateTimeWidth() {
+      this.timeWidth = 'auto';
+
+      this.$nextTick(() => {
+        const timeWidth = Math.max(
+          ...Array.from(document.querySelectorAll('.entry .time > *')).map((time) => time.clientWidth)
+        );
+        this.timeWidth = timeWidth + 'px';
+      });
     }
   },
   computed: {
@@ -134,6 +136,12 @@ export default {
     isCheckIn() {
       return this.userDataStore.checkInTime !== undefined;
     }
+  },
+  mounted() {
+    this.updateTimeWidth();
+  },
+  updated() {
+    this.updateTimeWidth();
   },
   components: { BaseDialog, ClearEntriesForm, EntryForm }
 };
@@ -172,22 +180,18 @@ export default {
         @click="handleEditEntry(entry)"
       >
         <div class="time">
-          <span>{{ toTime(entry.from) }}</span>
-          <span>{{ toTime(entry.to) }}</span>
+          <div>{{ toTimeStr(entry.from) }}</div>
+          <div>{{ toTimeStr(entry.to) }}</div>
         </div>
         <div class="divider"></div>
         <div class="info">
-          <div class="primary">
-            <span>{{ entry.workplace }}</span>
-            <span>{{ currencyFormat(entryTotalPay(entry)) }}</span>
-          </div>
-          <div class="secondary">
-            <span>{{ currencyFormat(entry.payRate) }}/hr</span>
-            <span>
-              <!-- Check if hourDiff is a whole number with 2 decimal places or not -->
-              {{ (hourDiff(entry) * 100) % 1 != 0 ? '≈ ' + Math.round(hourDiff(entry) * 100) / 100 : hourDiff(entry) }}
-              hours
-            </span>
+          <div class="workplace">{{ entry.workplace }}</div>
+          <div class="total">{{ currencyFormat(entryTotalPay(entry)) }}</div>
+          <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
+          <div class="hour-diff">
+            <!-- Check if hourDiff is a whole number with 2 decimal places or not -->
+            {{ (hourDiff(entry) * 100) % 1 != 0 ? '≈ ' + Math.round(hourDiff(entry) * 100) / 100 : hourDiff(entry) }}
+            hours
           </div>
         </div>
       </div>
@@ -220,52 +224,85 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 0 var(--padding);
+  margin: var(--padding) 0;
+  gap: var(--padding);
 }
 
 .entry-list .entry {
   position: relative;
   display: flex;
   flex-direction: row;
-  align-items: start;
+  align-items: stretch;
   justify-content: start;
-  margin: 0.5rem 0;
   line-height: 1.5em;
   cursor: pointer;
+  text-wrap: balance;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  --divider-width: 4px;
+  --divider-border-radius: calc(var(--divider-width) / 2);
 }
 
 .divider {
   align-self: stretch;
-  width: 4px;
-  border-radius: 2px;
-  background: green;
-  margin: 0 8px;
-}
-
-.time,
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  width: var(--divider-width);
+  border-radius: var(--divider-border-radius);
+  background: var(--primary-color);
 }
 
 .time {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
   text-align: right;
-  width: 4.2rem;
+  width: v-bind('timeWidth');
+  padding-right: var(--padding);
 }
 
 .info {
   flex: 1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'workplace total'
+    'pay-rate hour-diff';
+  gap: var(--padding);
+  justify-content: stretch;
+  align-items: stretch;
+  background-color: var(--input-background-color);
+  padding: var(--padding-small) var(--padding);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  margin: var(--divider-border-radius) 0;
 }
-
 .info > * {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  text-wrap: balance;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
-.info .primary {
+.info > *:nth-child(2n) {
+  text-align: right;
+}
+
+.info .workplace {
+  grid-area: workplace;
   font-weight: bold;
+}
+
+.info .total {
+  grid-area: total;
+  font-weight: bold;
+}
+
+.info .pay-rate {
+  grid-area: pay-rate;
+}
+
+.info .hour-diff {
+  grid-area: hour-diff;
 }
 
 .actions {
@@ -295,4 +332,3 @@ export default {
   width: 0;
 }
 </style>
-import type { computed } from 'vue';
