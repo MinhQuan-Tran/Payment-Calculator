@@ -105,7 +105,7 @@ export default {
 
 <style scoped>
 hr {
-  margin: 0.8rem;
+  margin: var(--padding);
 }
 
 .what-new {
@@ -117,6 +117,7 @@ hr {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  margin: 0 var(--padding);
 }
 
 .what-new .version {

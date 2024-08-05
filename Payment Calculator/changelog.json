@@ -42,11 +42,21 @@
   {
     "version": "0.2.3",
     "date": "2024-04-11T00:00:00+1000",
-    "changes": ["[Feature] Slide to Confirm button", "Optimise UI"]
+    "changes": ["[Feature] Slide to Confirm button", "Improve user interface and experience"]
   },
   {
     "version": "0.2.4",
     "date": "2024-04-12T00:00:00+1000",
     "changes": ["[Fix] Slide to Confirm button not working on mobile"]
+  },
+  {
+    "version": "0.3.0",
+    "date": "2024-08-05T00:00:00+1000",
+    "changes": [
+      "[Feature] Autocomplete entry",
+      "Support light and dark mode",
+      "Improve user interface and experience",
+      "Optimise code"
+    ]
   }
 ]

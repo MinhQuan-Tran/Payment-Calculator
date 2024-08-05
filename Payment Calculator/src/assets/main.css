@@ -2,14 +2,14 @@
   font-family: Arial, Helvetica, sans-serif;
   color-scheme: light dark;
 
-  --primary-color: #96daff;
+  --primary-color: #82d2fd;
   --warning-color: #ffff00;
   --danger-color: #ff6464;
   --success-color: #64ff64;
 
-  --background-color: light-dark(#fff, #272727);
-  --popup-background-color: light-dark(#fff, #353535);
-  --datalist-background-color: light-dark(#fafafa, #424242);
+  --background-color: light-dark(#fafafa, #272727);
+  --popup-background-color: light-dark(#fff, #303030);
+  --input-background-color: light-dark(#f0f0f0, #414141);
   --button-color: var(--primary-color);
   --text-color-white: #fff;
   --text-color-black: #000;
@@ -44,29 +44,14 @@ form {
   align-items: stretch;
 }
 
-fieldset {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: var(--border-radius);
-  border: none;
-  padding: var(--padding-small) 0;
-  margin: 0;
-}
-
-fieldset > * {
-  flex: 1;
-}
-
 input {
   font-size: large;
 }
 
 input:not([type='checkbox'], [type='radio']) {
   border: none;
-  background-color: inherit;
+  background-color: var(--input-background-color);
   border-radius: var(--border-radius);
-  border: 1px solid var(--text-color-faded);
   box-sizing: border-box;
   width: 100%;
   padding: var(--padding);

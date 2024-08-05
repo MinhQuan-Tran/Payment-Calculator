@@ -4,6 +4,7 @@ import { useUserDataStore } from '@/stores/userData';
 
 import ButtonConfirm from './ButtonConfirm.vue';
 import ComboBox from './ComboBox.vue';
+import InputLabel from './InputLabel.vue';
 
 import type { Entry } from '@/types';
 
@@ -137,7 +138,8 @@ export default {
   },
   components: {
     ButtonConfirm,
-    ComboBox
+    ComboBox,
+    InputLabel
   },
   watch: {
     entry() {
@@ -154,10 +156,7 @@ export default {
     </span>
     <input type="hidden" name="id" v-if="entry" v-model="formData.id" />
 
-    <!-- Not using 'for' in label to let user clicks on it to lose focus of the input -->
-
-    <fieldset>
-      <label>Workplace</label>
+    <InputLabel label="Workplace">
       <ComboBox
         :value="formData.workplace"
         @update:value="(newValue) => (formData.workplace = newValue)"
@@ -176,10 +175,9 @@ export default {
           autocomplete="off"
         />
       </ComboBox>
-    </fieldset>
+    </InputLabel>
 
-    <fieldset>
-      <label>Pay Rate</label>
+    <InputLabel label="Pay Rate">
       <ComboBox
         :value="formData.payRate ? formData.payRate.toString() : ''"
         @update:value="(newValue: number | undefined) => (formData.payRate = newValue)"
@@ -205,17 +203,15 @@ export default {
           autocomplete="off"
         />
       </ComboBox>
-    </fieldset>
+    </InputLabel>
 
-    <fieldset>
-      <label>From</label>
+    <InputLabel label="From">
       <input type="time" id="from" name="from" v-model="formData.from" required />
-    </fieldset>
+    </InputLabel>
 
-    <fieldset>
-      <label>To</label>
+    <InputLabel label="To">
       <input type="time" id="to" name="to" v-model="formData.to" required />
-    </fieldset>
+    </InputLabel>
 
     <div ref="actionBar" class="actions">
       <template v-if="action == 'edit'">

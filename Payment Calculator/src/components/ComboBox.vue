@@ -75,7 +75,7 @@ export default {
   width: 100%;
   padding: var(--padding-small);
   font-size: inherit;
-  background-color: var(--datalist-background-color);
+  background-color: var(--input-background-color);
   box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
 }
 
@@ -88,6 +88,10 @@ export default {
   flex-direction: row;
   justify-content: space-between;
   gap: 1em;
+  text-wrap: balance;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .datalist .item:hover {
