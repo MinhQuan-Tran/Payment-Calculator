@@ -90,14 +90,14 @@ button:hover {
   display: inline-block;
   width: 1em;
   height: 1em;
-  --close-icon: url('./icons8-close-black.svg');
+  --close-icon: url('/icons8-close-black.svg');
   background: var(--close-icon) 50% 50% no-repeat;
   background-size: 100%;
 }
 
 @media screen and (prefers-color-scheme: dark) {
   .icons8-close {
-    --close-icon: url('./icons8-close-white.svg');
+    --close-icon: url('/icons8-close-white.svg');
   }
 }
 
