@@ -63,5 +63,10 @@
     "version": "0.3.1",
     "date": "2024-08-07T00:00:00+1000",
     "changes": ["[Fix] Dialog closing button icon not showing"]
+  },
+  {
+    "version": "0.3.2",
+    "date": "",
+    "changes": ["[Fix] Incorrect version comparison", "Optimise code"]
   }
 ]

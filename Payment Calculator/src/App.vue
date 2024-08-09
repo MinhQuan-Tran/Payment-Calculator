@@ -2,7 +2,6 @@
 import packageJson from '@/../package.json';
 import changelog from '@/../changelog.json';
 import type { Entry } from '@/types';
-import { version } from 'vue';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -24,18 +23,22 @@ export default {
       date: string;
       changes: string[];
     }[] {
+      const currentVersion = localStorage.getItem('appVersion')?.split('.').map(Number) || [0, 0, 0];
+
       return changelog
         .filter((log: { version: string; date: string; changes: string[] }) => {
-          // Compare version numbers within currentVersion and change.version
-          const latestVersion = version.split('.').map(Number);
-          const currentVersion = localStorage.getItem('appVersion')?.split('.').map(Number) || [0, 0, 0];
           const logVersion = log.version.split('.').map(Number);
 
+          // Compare version numbers
           for (let i = 0; i < logVersion.length; i++) {
-            if (latestVersion[i] >= logVersion[i] && logVersion[i] > currentVersion[i]) {
+            if (logVersion[i] > currentVersion[i]) {
               return true;
+            } else if (logVersion[i] < currentVersion[i]) {
+              return false;
             }
           }
+
+          return false;
         })
         .reverse();
     }
@@ -74,7 +77,7 @@ export default {
     });
 
     const currentVersion = localStorage.getItem('appVersion');
-    if (currentVersion !== changelog[changelog.length - 1].version) {
+    if (currentVersion !== packageJson.version) {
       localStorage.setItem('appVersion', packageJson.version);
       (this.$refs.dialog as any).showModal();
     }

@@ -10,7 +10,10 @@ import type { Entry } from '@/types';
 
 export default {
   props: {
-    entry: Object as () => Partial<Entry>,
+    entry: {
+      type: Object as () => Partial<Entry>,
+      default: () => ({}) as Entry
+    },
     selectedDate: {
       type: Date,
       required: true
@@ -22,13 +25,7 @@ export default {
   },
   data() {
     return {
-      formData: {
-        id: this.entry?.id,
-        workplace: this.entry?.workplace,
-        payRate: this.entry?.payRate,
-        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
-      },
+      formData: this.entry,
       hiddenElements: [] as Element[]
     };
   },
@@ -45,53 +42,52 @@ export default {
     entryAction(event: Event) {
       const form = event.currentTarget as HTMLFormElement;
 
-      const entry = {
-        id: this.formData.id,
-        workplace: this.formData.workplace,
-        payRate: this.formData.payRate,
-        from: new Date(
-          this.selectedDate.setHours(
-            parseInt(this.formData.from?.split(':')[0] || ''),
-            parseInt(this.formData.from?.split(':')[1] || '')
-          )
-        ),
-        to: new Date(
-          this.selectedDate.setHours(
-            parseInt(this.formData.to?.split(':')[0] || ''),
-            parseInt(this.formData.to?.split(':')[1] || '')
-          )
-        )
-      } as Entry;
-
       let action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
 
       switch (action) {
         case 'add':
-          entry.id = this.entries.length + 1;
-          this.entries.push(entry);
+          try {
+            const entry = { ...this.formData, id: this.entries.length + 1 } as Entry;
 
-          if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
-            this.prevWorkInfos[entry.workplace].payRate.add(entry.payRate);
-          } else {
-            this.prevWorkInfos[entry.workplace] = {
-              payRate: new Set<number>([entry.payRate])
-            };
+            this.entries.push(entry);
+
+            if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
+              this.prevWorkInfos[entry.workplace].payRate.add(entry.payRate);
+            } else {
+              this.prevWorkInfos[entry.workplace] = {
+                payRate: new Set<number>([entry.payRate])
+              };
+            }
+          } catch (error) {
+            alert('Invalid entry');
+            throw new Error('Invalid entry');
           }
+
           break;
 
         case 'edit':
-          this.entries.splice(
-            this.entries.findIndex((e) => e.id === entry.id),
-            1,
-            entry
-          );
+          try {
+            const entry = this.formData as Entry;
+
+            this.entries.splice(
+              this.entries.findIndex((e) => e.id === entry.id),
+              1,
+              entry
+            );
+          } catch (error) {
+            alert('Invalid entry');
+            throw new Error('Invalid entry');
+          }
+
           break;
 
         case 'delete':
-          this.entries.splice(
-            this.entries.findIndex((e) => e.id === entry.id),
-            1
-          );
+          this.formData?.id
+            ? this.entries.splice(
+                this.entries.findIndex((e) => e.id === this.formData!.id),
+                1
+              )
+            : alert('Invalid entry');
           break;
 
         case 'remove check in':
@@ -114,8 +110,8 @@ export default {
         id: this.entry?.id,
         workplace: this.entry?.workplace,
         payRate: this.entry?.payRate,
-        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
+        from: this.entry?.from,
+        to: this.entry?.to
       };
     },
 
@@ -154,11 +150,11 @@ export default {
     <span class="selected-date">
       {{ selectedDate.toLocaleString(undefined, { dateStyle: 'full' }) }}
     </span>
-    <input type="hidden" name="id" v-if="entry" v-model="formData.id" />
+    <input type="hidden" name="id" v-if="formData?.id" v-model="formData.id" />
 
     <InputLabel label="Workplace">
       <ComboBox
-        :value="formData.workplace"
+        :value="formData?.workplace || ''"
         @update:value="(newValue) => (formData.workplace = newValue)"
         :list="Object.keys(prevWorkInfos)"
         @delete-item="prevWorkInfos[$event] && delete prevWorkInfos[$event]"
@@ -206,11 +202,11 @@ export default {
     </InputLabel>
 
     <InputLabel label="From">
-      <input type="time" id="from" name="from" v-model="formData.from" required />
+      <input type="datetime-local" id="from" name="from" v-model="formData.from" required />
     </InputLabel>
 
     <InputLabel label="To">
-      <input type="time" id="to" name="to" v-model="formData.to" required />
+      <input type="datetime-local" id="to" name="to" v-model="formData.to" required />
     </InputLabel>
 
     <div ref="actionBar" class="actions">
