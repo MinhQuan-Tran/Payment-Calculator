@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Entry, WorkInfos } from '@/types';
-import { currencyFormat, toTimeStr } from '@/utils';
+import { currencyFormat, hourFormat, toTimeStr } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -34,11 +34,12 @@ export default {
             }
           | undefined
       },
-      timeWidth: 'auto'
+      datetimeWidth: 'auto'
     };
   },
   methods: {
     currencyFormat,
+    hourFormat,
     toTimeStr,
 
     hourDiff(entry: Entry) {
@@ -65,11 +66,14 @@ export default {
     },
 
     handleCheckInOut() {
+      // If not checked in
       if (!this.isCheckIn) {
+        // Check in
         this.userDataStore.checkInTime = new Date();
         return;
       }
 
+      // If no check in time found
       if (!this.userDataStore.checkInTime) {
         if (confirm('Check in time is not set. Do you want to set it now?')) {
           this.userDataStore.checkInTime = new Date();
@@ -77,37 +81,25 @@ export default {
         return;
       }
 
-      // If the check in time is today
-      if (new Date(this.userDataStore.checkInTime).setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0)) {
-        this.entryFormData = {
-          title: 'Check Out',
-          resetForm: false,
-          action: 'check in/out',
-          placeholderEntry: {
-            id: undefined,
-            workplace: undefined,
-            payRate: undefined,
-            from: this.userDataStore.checkInTime,
-            to: new Date()
-          }
-        };
-
-        (this.$refs.entryDialog as any).showModal();
-      } else {
-        // If the check in time is not today
-        if (
-          !confirm(
-            `Your check in time is not today (${this.userDataStore.checkInTime.toLocaleString(undefined, {
-              dateStyle: 'medium',
-              timeStyle: 'short'
-            })}). Do you want to remove it?`
-          )
-        ) {
-          // Will work on it later
-          return;
+      if (isNaN(this.userDataStore.checkInTime.getTime())) {
+        if (confirm('Invalid check in time. Do you want to remove it?')) {
+          this.userDataStore.checkInTime = undefined;
         }
-        this.userDataStore.checkInTime = undefined;
+        return;
       }
+
+      // Check out
+      this.entryFormData = {
+        title: 'Check Out',
+        resetForm: false,
+        action: 'check in/out',
+        placeholderEntry: {
+          from: this.userDataStore.checkInTime,
+          to: new Date()
+        }
+      };
+
+      (this.$refs.entryDialog as any).showModal();
     },
 
     handleAddEntry() {
@@ -115,19 +107,22 @@ export default {
         title: 'Add Entry',
         resetForm: false,
         action: 'add',
-        placeholderEntry: undefined
+        placeholderEntry: {
+          // Set the from and to time to the selected date with the current time
+          from: new Date(this.selectedDate.setHours(new Date().getHours(), new Date().getMinutes())),
+          to: new Date(this.selectedDate.setHours(new Date().getHours(), new Date().getMinutes()))
+        }
       };
       (this.$refs.entryDialog as any).showModal();
     },
 
     updateTimeWidth() {
-      this.timeWidth = 'auto';
+      this.datetimeWidth = 'auto';
 
       this.$nextTick(() => {
-        const timeWidth = Math.max(
-          ...Array.from(document.querySelectorAll('.entry .time > *')).map((time) => time.clientWidth)
-        );
-        this.timeWidth = timeWidth + 'px';
+        this.datetimeWidth =
+          Math.max(...Array.from(document.querySelectorAll('.entry .datetime > *')).map((time) => time.clientWidth)) +
+          'px';
       });
     }
   },
@@ -167,6 +162,7 @@ export default {
     </div>
 
     <div class="entry-list">
+      <!-- TODO: Seperate to Entry component -->
       <div
         v-for="entry in entries!.sort((a: Entry, b: Entry) => {
           if (new Date(a.from) < new Date(b.from)) {
@@ -179,9 +175,35 @@ export default {
         class="entry"
         @click="handleEditEntry(entry)"
       >
-        <div class="time">
-          <div>{{ toTimeStr(entry.from) }}</div>
-          <div>{{ toTimeStr(entry.to) }}</div>
+        <div class="datetime">
+          <div class="from">
+            <div
+              class="date"
+              v-if="new Date(entry.from).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
+            >
+              {{
+                entry.from.toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric'
+                })
+              }}
+            </div>
+            <div class="time">{{ toTimeStr(entry.from) }}</div>
+          </div>
+          <div class="to">
+            <div
+              class="date"
+              v-if="new Date(entry.to).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
+            >
+              {{
+                entry.to.toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric'
+                })
+              }}
+            </div>
+            <div class="time">{{ toTimeStr(entry.to) }}</div>
+          </div>
         </div>
         <div class="divider"></div>
         <div class="info">
@@ -189,9 +211,7 @@ export default {
           <div class="total">{{ currencyFormat(entryTotalPay(entry)) }}</div>
           <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
           <div class="hour-diff">
-            <!-- Check if hourDiff is a whole number with 2 decimal places or not -->
-            {{ (hourDiff(entry) * 100) % 1 != 0 ? '≈ ' + Math.round(hourDiff(entry) * 100) / 100 : hourDiff(entry) }}
-            hours
+            {{ hourFormat(hourDiff(entry)) }}
           </div>
         </div>
       </div>
@@ -208,7 +228,7 @@ export default {
     </BaseDialog>
 
     <BaseDialog ref="entryDialog" :title="entryFormData.title" :reset-forms="entryFormData.resetForm">
-      <EntryForm :selected-date="selectedDate" :entry="entryFormData.placeholderEntry" :action="entryFormData.action" />
+      <EntryForm :entry="entryFormData.placeholderEntry" :action="entryFormData.action" />
     </BaseDialog>
   </div>
 </template>
@@ -225,7 +245,7 @@ export default {
   flex-direction: column;
   align-items: stretch;
   margin: var(--padding) 0;
-  gap: var(--padding);
+  gap: 0.75em;
 }
 
 .entry-list .entry {
@@ -234,7 +254,6 @@ export default {
   flex-direction: row;
   align-items: stretch;
   justify-content: start;
-  line-height: 1.5em;
   cursor: pointer;
   text-wrap: balance;
   text-wrap: pretty;
@@ -251,14 +270,22 @@ export default {
   background: var(--primary-color);
 }
 
-.time {
+.datetime {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  gap: 1em;
   align-items: stretch;
   text-align: right;
-  width: v-bind('timeWidth');
+  width: v-bind('datetimeWidth');
   padding-right: var(--padding);
+  white-space: nowrap;
+}
+
+.datetime .date {
+  font-size: smaller;
+  font-weight: bold;
+  opacity: 0.5;
 }
 
 .info {
@@ -269,10 +296,12 @@ export default {
     'workplace total'
     'pay-rate hour-diff';
   gap: var(--padding);
+  justify-items: stretch;
   justify-content: stretch;
-  align-items: stretch;
+  align-items: center;
+  align-content: space-between;
   background-color: var(--input-background-color);
-  padding: var(--padding-small) var(--padding);
+  padding: var(--padding);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   margin: var(--divider-border-radius) 0;
 }

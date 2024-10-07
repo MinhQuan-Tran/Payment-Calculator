@@ -66,7 +66,14 @@
   },
   {
     "version": "0.3.2",
-    "date": "",
-    "changes": ["[Fix] Incorrect version comparison", "Optimise code"]
+    "date": "2024-10-07T00:00:00+1000",
+    "changes": [
+      "[Fix] Incorrect version comparison",
+      "[Fix] Duplicate and missing autocomplete work infos",
+      "[Feature] Allow work on multiple days",
+      "[Feature] More week summary details",
+      "Improve user interface and experience",
+      "Optimise code"
+    ]
   }
 ]

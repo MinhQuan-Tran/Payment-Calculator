@@ -13,7 +13,7 @@ import BaseDialog from '@/components/BaseDialog.vue';
 export default {
   data() {
     return {
-      selectedDate: new Date(),
+      selectedDate: new Date(new Date().setHours(0, 0, 0, 0)),
       openChangelogDialog: Function
     };
   },
@@ -52,13 +52,12 @@ export default {
       }
 
       return this.userDataStore.entries.filter((entry) => {
-        const fromDate = new Date(entry.from).setHours(0, 0, 0, 0);
-        const toDate = new Date(entry.to).setHours(0, 0, 0, 0);
+        const entryFromDate = new Date(entry.from).setHours(0, 0, 0, 0);
+        const entryToDate = new Date(entry.to).setHours(0, 0, 0, 0);
 
-        return (
-          fromDate == new Date(this.selectedDate).setHours(0, 0, 0, 0) &&
-          toDate == new Date(this.selectedDate).setHours(0, 0, 0, 0)
-        );
+        const selectedDate = new Date(this.selectedDate).setHours(0, 0, 0, 0);
+
+        return entryFromDate <= selectedDate && selectedDate <= entryToDate;
       });
     }
   },
@@ -70,10 +69,18 @@ export default {
   mounted() {
     window.addEventListener('storage', this.userDataStore.handleStorageChange);
 
+    // Run on update
     this.userDataStore.$subscribe((mutation, state) => {
       for (const [key, value] of Object.entries(state)) {
+        this.userDataStore.fixState(key, value);
         this.userDataStore.saveToLocalStorage(key, value);
       }
+    });
+
+    // Run once when mounted
+    Object.entries(this.userDataStore.$state).forEach(([key, value]) => {
+      this.userDataStore.fixState(key, value);
+      this.userDataStore.saveToLocalStorage(key, value);
     });
 
     const currentVersion = localStorage.getItem('appVersion');

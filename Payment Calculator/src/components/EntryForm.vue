@@ -14,10 +14,6 @@ export default {
       type: Object as () => Partial<Entry>,
       default: () => ({}) as Entry
     },
-    selectedDate: {
-      type: Date,
-      required: true
-    },
     action: {
       type: String,
       required: true
@@ -46,17 +42,23 @@ export default {
 
       switch (action) {
         case 'add':
+        case 'check in':
+          // TODO: Check formDate valid before saving (Number, Date, 'from' cannot be later than 'to')
           try {
             const entry = { ...this.formData, id: this.entries.length + 1 } as Entry;
 
             this.entries.push(entry);
 
             if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
-              this.prevWorkInfos[entry.workplace].payRate.add(entry.payRate);
+              this.prevWorkInfos[entry.workplace].payRate.add(Number(entry.payRate));
             } else {
               this.prevWorkInfos[entry.workplace] = {
-                payRate: new Set<number>([entry.payRate])
+                payRate: new Set<number>([Number(entry.payRate)])
               };
+            }
+
+            if (action === 'check in') {
+              this.checkInTime = undefined;
             }
           } catch (error) {
             alert('Invalid entry');
@@ -106,30 +108,34 @@ export default {
     },
 
     resetForm() {
-      this.formData = {
-        id: this.entry?.id,
-        workplace: this.entry?.workplace,
-        payRate: this.entry?.payRate,
-        from: this.entry?.from,
-        to: this.entry?.to
-      };
+      this.formData = this.entry;
     },
 
     focusButtonConfirm(isHolding: boolean) {
       if (isHolding) {
         // Hide all elements except this button and the bar
-        (this.$refs.actionBar as HTMLElement)
+        return (this.$refs.actionBar as HTMLElement)
           ?.querySelectorAll('*:not(.slider:has(.button-confirm.active))')
           .forEach((el) => {
             this.hiddenElements.push(el);
             el.classList.add('hide');
           });
-      } else {
-        this.hiddenElements.forEach((el) => {
-          el.classList.remove('hide');
-        });
-        this.hiddenElements = [];
       }
+
+      this.hiddenElements.forEach((el) => {
+        el.classList.remove('hide');
+      });
+      this.hiddenElements = [];
+    },
+
+    toDateTimeLocal(date: Date | undefined) {
+      if (!date) {
+        return '';
+      }
+
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - offset * 60 * 1000);
+      return localDate.toISOString().slice(0, 16);
     }
   },
   components: {
@@ -147,9 +153,6 @@ export default {
 
 <template>
   <form @submit.prevent="entryAction" @reset.prevent="resetForm">
-    <span class="selected-date">
-      {{ selectedDate.toLocaleString(undefined, { dateStyle: 'full' }) }}
-    </span>
     <input type="hidden" name="id" v-if="formData?.id" v-model="formData.id" />
 
     <InputLabel label="Workplace">
@@ -157,7 +160,7 @@ export default {
         :value="formData?.workplace || ''"
         @update:value="(newValue) => (formData.workplace = newValue)"
         :list="Object.keys(prevWorkInfos)"
-        @delete-item="prevWorkInfos[$event] && delete prevWorkInfos[$event]"
+        @delete-item="delete prevWorkInfos[$event]"
         deletable
       >
         <input
@@ -176,7 +179,7 @@ export default {
     <InputLabel label="Pay Rate">
       <ComboBox
         :value="formData.payRate ? formData.payRate.toString() : ''"
-        @update:value="(newValue: number | undefined) => (formData.payRate = newValue)"
+        @update:value="(newValue: number | undefined) => (formData.payRate = Number(newValue))"
         :list="
           formData.workplace && prevWorkInfos[formData.workplace]?.payRate
             ? Array.from(prevWorkInfos[formData.workplace]?.payRate).map((pr) => pr.toString())
@@ -202,11 +205,27 @@ export default {
     </InputLabel>
 
     <InputLabel label="From">
-      <input type="datetime-local" id="from" name="from" v-model="formData.from" required />
+      <input
+        type="datetime-local"
+        id="from"
+        name="from"
+        :value="toDateTimeLocal(formData.from)"
+        :max="toDateTimeLocal(formData.to)"
+        @input="(event) => (formData.from = new Date((event.target as HTMLInputElement).value))"
+        required
+      />
     </InputLabel>
 
     <InputLabel label="To">
-      <input type="datetime-local" id="to" name="to" v-model="formData.to" required />
+      <input
+        type="datetime-local"
+        id="to"
+        name="to"
+        :value="toDateTimeLocal(formData.to)"
+        :min="toDateTimeLocal(formData.from)"
+        @input="(event) => (formData.to = new Date((event.target as HTMLInputElement).value))"
+        required
+      />
     </InputLabel>
 
     <div ref="actionBar" class="actions">
@@ -239,18 +258,13 @@ export default {
         >
           Remove
         </ButtonConfirm>
-        <button type="submit" name="action" value="add">Add Entry</button>
+        <button type="submit" name="action" value="check in">Add Entry</button>
       </template>
     </div>
   </form>
 </template>
 
 <style scoped>
-.selected-date {
-  display: block;
-  text-align: center;
-}
-
 .actions {
   transition: gap 0.3s ease;
 }
