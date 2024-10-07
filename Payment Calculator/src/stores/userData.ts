@@ -18,18 +18,47 @@ export const useUserDataStore = defineStore('userData', {
 
     prevWorkInfos: (localStorage.getItem('prevWorkInfos') &&
     !Array.isArray(JSON.parse(localStorage.getItem('prevWorkInfos')!))
-      ? JSON.parse(localStorage.getItem('prevWorkInfos')!)
+      ? JSON.parse(localStorage.getItem('prevWorkInfos')!, (key, value) => {
+          if (key === 'payRate' && value instanceof Array) {
+            return new Set<number>(value.map((rate: number | string) => Number(rate)));
+          }
+          return value;
+        })
       : {}) as WorkInfos
   }),
 
   actions: {
+    fixState(key: string, value: any) {
+      console.log('Fixing ', key);
+      switch (key) {
+        case 'entries':
+          return value.map((entry: Entry) => ({
+            ...entry,
+            payRate: Number(entry.payRate),
+            from: new Date(entry.from),
+            to: new Date(entry.to)
+          }));
+        case 'checkInTime':
+          return new Date(value);
+        case 'prevWorkInfos':
+          for (const workplace in value) {
+            if (value[workplace].payRate instanceof Array) {
+              value[workplace].payRate = new Set<number>([...value[workplace].payRate].map((rate) => Number(rate)));
+            }
+          }
+      }
+    },
+
     saveToLocalStorage(key: string, value: any) {
       if (value === undefined) {
         console.log('Removing ', key);
         localStorage.removeItem(key);
       } else {
         console.log('Saving ', key, value);
-        localStorage.setItem(key, JSON.stringify(value));
+        localStorage.setItem(
+          key,
+          JSON.stringify(value, (_key, value) => (value instanceof Set ? [...value] : value))
+        );
       }
     },
 
@@ -39,7 +68,7 @@ export const useUserDataStore = defineStore('userData', {
         (this as any)[event.key] = JSON.parse(event.newValue);
         console.log('Parsed value:', (this as any)[event.key]);
       } else {
-        console.warn('Ay yo! Do not change storage manually, please. Reversing changes...');
+        console.warn('Do not touch the storage, please. Reversing changes...');
       }
     }
   }

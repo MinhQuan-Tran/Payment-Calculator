@@ -10,10 +10,9 @@ import type { Entry } from '@/types';
 
 export default {
   props: {
-    entry: Object as () => Partial<Entry>,
-    selectedDate: {
-      type: Date,
-      required: true
+    entry: {
+      type: Object as () => Partial<Entry>,
+      default: () => ({}) as Entry
     },
     action: {
       type: String,
@@ -22,13 +21,7 @@ export default {
   },
   data() {
     return {
-      formData: {
-        id: this.entry?.id,
-        workplace: this.entry?.workplace,
-        payRate: this.entry?.payRate,
-        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
-      },
+      formData: this.entry,
       hiddenElements: [] as Element[]
     };
   },
@@ -45,53 +38,58 @@ export default {
     entryAction(event: Event) {
       const form = event.currentTarget as HTMLFormElement;
 
-      const entry = {
-        id: this.formData.id,
-        workplace: this.formData.workplace,
-        payRate: this.formData.payRate,
-        from: new Date(
-          this.selectedDate.setHours(
-            parseInt(this.formData.from?.split(':')[0] || ''),
-            parseInt(this.formData.from?.split(':')[1] || '')
-          )
-        ),
-        to: new Date(
-          this.selectedDate.setHours(
-            parseInt(this.formData.to?.split(':')[0] || ''),
-            parseInt(this.formData.to?.split(':')[1] || '')
-          )
-        )
-      } as Entry;
-
       let action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
 
       switch (action) {
         case 'add':
-          entry.id = this.entries.length + 1;
-          this.entries.push(entry);
+        case 'check in':
+          // TODO: Check formDate valid before saving (Number, Date, 'from' cannot be later than 'to')
+          try {
+            const entry = { ...this.formData, id: this.entries.length + 1 } as Entry;
 
-          if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
-            this.prevWorkInfos[entry.workplace].payRate.add(entry.payRate);
-          } else {
-            this.prevWorkInfos[entry.workplace] = {
-              payRate: new Set<number>([entry.payRate])
-            };
+            this.entries.push(entry);
+
+            if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
+              this.prevWorkInfos[entry.workplace].payRate.add(Number(entry.payRate));
+            } else {
+              this.prevWorkInfos[entry.workplace] = {
+                payRate: new Set<number>([Number(entry.payRate)])
+              };
+            }
+
+            if (action === 'check in') {
+              this.checkInTime = undefined;
+            }
+          } catch (error) {
+            alert('Invalid entry');
+            throw new Error('Invalid entry');
           }
+
           break;
 
         case 'edit':
-          this.entries.splice(
-            this.entries.findIndex((e) => e.id === entry.id),
-            1,
-            entry
-          );
+          try {
+            const entry = this.formData as Entry;
+
+            this.entries.splice(
+              this.entries.findIndex((e) => e.id === entry.id),
+              1,
+              entry
+            );
+          } catch (error) {
+            alert('Invalid entry');
+            throw new Error('Invalid entry');
+          }
+
           break;
 
         case 'delete':
-          this.entries.splice(
-            this.entries.findIndex((e) => e.id === entry.id),
-            1
-          );
+          this.formData?.id
+            ? this.entries.splice(
+                this.entries.findIndex((e) => e.id === this.formData!.id),
+                1
+              )
+            : alert('Invalid entry');
           break;
 
         case 'remove check in':
@@ -110,30 +108,34 @@ export default {
     },
 
     resetForm() {
-      this.formData = {
-        id: this.entry?.id,
-        workplace: this.entry?.workplace,
-        payRate: this.entry?.payRate,
-        from: this.entry?.from?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }),
-        to: this.entry?.to?.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })
-      };
+      this.formData = this.entry;
     },
 
     focusButtonConfirm(isHolding: boolean) {
       if (isHolding) {
         // Hide all elements except this button and the bar
-        (this.$refs.actionBar as HTMLElement)
+        return (this.$refs.actionBar as HTMLElement)
           ?.querySelectorAll('*:not(.slider:has(.button-confirm.active))')
           .forEach((el) => {
             this.hiddenElements.push(el);
             el.classList.add('hide');
           });
-      } else {
-        this.hiddenElements.forEach((el) => {
-          el.classList.remove('hide');
-        });
-        this.hiddenElements = [];
       }
+
+      this.hiddenElements.forEach((el) => {
+        el.classList.remove('hide');
+      });
+      this.hiddenElements = [];
+    },
+
+    toDateTimeLocal(date: Date | undefined) {
+      if (!date) {
+        return '';
+      }
+
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - offset * 60 * 1000);
+      return localDate.toISOString().slice(0, 16);
     }
   },
   components: {
@@ -151,17 +153,14 @@ export default {
 
 <template>
   <form @submit.prevent="entryAction" @reset.prevent="resetForm">
-    <span class="selected-date">
-      {{ selectedDate.toLocaleString(undefined, { dateStyle: 'full' }) }}
-    </span>
-    <input type="hidden" name="id" v-if="entry" v-model="formData.id" />
+    <input type="hidden" name="id" v-if="formData?.id" v-model="formData.id" />
 
     <InputLabel label="Workplace">
       <ComboBox
-        :value="formData.workplace"
+        :value="formData?.workplace || ''"
         @update:value="(newValue) => (formData.workplace = newValue)"
         :list="Object.keys(prevWorkInfos)"
-        @delete-item="prevWorkInfos[$event] && delete prevWorkInfos[$event]"
+        @delete-item="delete prevWorkInfos[$event]"
         deletable
       >
         <input
@@ -180,7 +179,7 @@ export default {
     <InputLabel label="Pay Rate">
       <ComboBox
         :value="formData.payRate ? formData.payRate.toString() : ''"
-        @update:value="(newValue: number | undefined) => (formData.payRate = newValue)"
+        @update:value="(newValue: number | undefined) => (formData.payRate = Number(newValue))"
         :list="
           formData.workplace && prevWorkInfos[formData.workplace]?.payRate
             ? Array.from(prevWorkInfos[formData.workplace]?.payRate).map((pr) => pr.toString())
@@ -206,11 +205,27 @@ export default {
     </InputLabel>
 
     <InputLabel label="From">
-      <input type="time" id="from" name="from" v-model="formData.from" required />
+      <input
+        type="datetime-local"
+        id="from"
+        name="from"
+        :value="toDateTimeLocal(formData.from)"
+        :max="toDateTimeLocal(formData.to)"
+        @input="(event) => (formData.from = new Date((event.target as HTMLInputElement).value))"
+        required
+      />
     </InputLabel>
 
     <InputLabel label="To">
-      <input type="time" id="to" name="to" v-model="formData.to" required />
+      <input
+        type="datetime-local"
+        id="to"
+        name="to"
+        :value="toDateTimeLocal(formData.to)"
+        :min="toDateTimeLocal(formData.from)"
+        @input="(event) => (formData.to = new Date((event.target as HTMLInputElement).value))"
+        required
+      />
     </InputLabel>
 
     <div ref="actionBar" class="actions">
@@ -243,18 +258,13 @@ export default {
         >
           Remove
         </ButtonConfirm>
-        <button type="submit" name="action" value="add">Add Entry</button>
+        <button type="submit" name="action" value="check in">Add Entry</button>
       </template>
     </div>
   </form>
 </template>
 
 <style scoped>
-.selected-date {
-  display: block;
-  text-align: center;
-}
-
 .actions {
   transition: gap 0.3s ease;
 }
