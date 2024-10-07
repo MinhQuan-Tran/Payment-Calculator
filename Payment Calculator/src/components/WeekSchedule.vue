@@ -324,8 +324,9 @@ export default {
   text-align: left;
   justify-content: start;
   background-color: var(--primary-color);
-  padding: 0 var(--padding);
+  padding: 0 var(--padding-small);
   color: var(--text-color-black);
+  text-wrap: nowrap;
 }
 
 .summary:last-child {
