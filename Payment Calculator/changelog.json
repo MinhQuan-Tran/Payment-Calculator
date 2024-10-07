@@ -75,5 +75,10 @@
       "Improve user interface and experience",
       "Optimise code"
     ]
+  },
+  {
+    "version": "0.3.3",
+    "date": "2024-10-07T00:00:00+1000",
+    "changes": ["[Fix] Incorrect week summaries"]
   }
 ]

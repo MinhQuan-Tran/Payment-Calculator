@@ -77,12 +77,12 @@ export default {
           } as Day);
 
           week.summaries.net += this.getEntriesForDay(currentDate).reduce(
-            (acc, entry) => getEntryWorkHours(entry) * entry.payRate,
+            (acc, entry) => (acc += getEntryWorkHours(entry) * entry.payRate),
             0
           );
 
           week.summaries.totalHours += this.getEntriesForDay(currentDate).reduce(
-            (acc, entry) => getEntryWorkHours(entry),
+            (acc, entry) => (acc += getEntryWorkHours(entry)),
             0
           );
 
