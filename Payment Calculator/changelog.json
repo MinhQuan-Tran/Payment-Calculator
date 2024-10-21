@@ -80,5 +80,13 @@
     "version": "0.3.3",
     "date": "2024-10-07T00:00:00+1000",
     "changes": ["[Fix] Incorrect week summaries"]
+  },
+  {
+    "version": "0.3.4",
+    "date": "2024-10-21T00:00:00+1100",
+    "changes": [
+      "[Fix] Duplicate entry calculations for multi-day durations",
+      "[Feature] Update version only when the What's new dialog is closed"
+    ]
   }
 ]

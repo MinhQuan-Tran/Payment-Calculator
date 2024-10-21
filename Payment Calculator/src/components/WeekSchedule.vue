@@ -1,11 +1,6 @@
 <script lang="ts">
 import type { Entry, Week, Day } from '@/types';
-import { currencyFormat, hourFormat, getEntryWorkHours } from '@/utils';
-
-enum VIEW_MODE {
-  MONTH = 'month',
-  WEEK = 'week'
-}
+import { currencyFormat, hourFormat, getWorkHours, getEntries } from '@/utils';
 
 export default {
   props: {
@@ -25,8 +20,6 @@ export default {
     return {
       title: 'Week Schedule',
       weekDays: ['M.', 'Tu.', 'W.', 'Th.', 'F', 'Sa.', 'Su.'],
-      VIEW_MODE,
-      view: VIEW_MODE.MONTH,
       today,
       monthChange: 0,
       spaceBetweenDay: '0px',
@@ -44,7 +37,7 @@ export default {
 
       let currentDate = new Date(firstDayOfMonth);
 
-      // Set the date to the first day of the week (Monday)
+      // Set the currentDate to the first day of the week (Monday)
       // e.g. if the first day of the month is on Friday 1 December 2023,
       // then the first day of the week is 1 December 2023 - 5 days = Sunday 26 November 2023
       // Sunday 26 November 2023 + 1 day = Monday 27 November 2023
@@ -61,6 +54,21 @@ export default {
           }
         } as Week;
 
+        // from 12am on Monday
+        const from = new Date(currentDate);
+        from.setHours(0, 0, 0, 0);
+
+        // to 12am on the next Monday
+        const to = new Date(currentDate);
+        to.setDate(to.getDate() + 7);
+        to.setHours(0, 0, 0, 0);
+
+        const entries = getEntries(this.entries, from, to);
+
+        week.summaries.net += entries.reduce((acc, entry) => (acc += getWorkHours(entry) * entry.payRate), 0);
+        week.summaries.totalHours += entries.reduce((acc, entry) => (acc += getWorkHours(entry)), 0);
+
+        // Create the days of the week
         for (let i = 0; i < 7; i++) {
           const isPrevMonth = currentDate.getMonth() < firstDayOfMonth.getMonth();
           const isNextMonth = currentDate.getMonth() > firstDayOfMonth.getMonth();
@@ -76,16 +84,6 @@ export default {
             nextMonth: isNextMonth
           } as Day);
 
-          week.summaries.net += this.getEntriesForDay(currentDate).reduce(
-            (acc, entry) => (acc += getEntryWorkHours(entry) * entry.payRate),
-            0
-          );
-
-          week.summaries.totalHours += this.getEntriesForDay(currentDate).reduce(
-            (acc, entry) => (acc += getEntryWorkHours(entry)),
-            0
-          );
-
           currentDate.setDate(currentDate.getDate() + 1);
         }
 
@@ -100,22 +98,8 @@ export default {
   },
   methods: {
     currencyFormat,
-    getEntryWorkHours,
-
-    getEntriesForDay(date: Date) {
-      // Filter entries for the given date
-      return this.entries.filter((entry) => {
-        const entryFromDate = new Date(entry.from);
-        const entryToDate = new Date(entry.to);
-        entryFromDate.setHours(0, 0, 0, 0);
-        entryToDate.setHours(0, 0, 0, 0);
-
-        const selectedDate = new Date(date);
-
-        // Including the ones with 'from' in the past and 'to' in the future
-        return entryFromDate <= selectedDate && selectedDate <= entryToDate;
-      });
-    },
+    getWorkHours,
+    getEntries,
 
     updateTitleByMonth() {
       const date = new Date(this.today);
@@ -189,11 +173,11 @@ export default {
             {
               // Compare the dates only
               selected: selectedDate && selectedDate.getTime() === day.dayStartTime.getTime(),
-              'has-entry': getEntriesForDay(day.dayStartTime).length > 0,
-              'has-entry-past': getEntriesForDay(day.dayStartTime).some(
+              'has-entry': getEntries(entries, day.dayStartTime, day.dayEndTime).length > 0,
+              'has-entry-past': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
                 (entry) => new Date(entry.from) < day.dayStartTime
               ),
-              'has-entry-future': getEntriesForDay(day.dayStartTime).some(
+              'has-entry-future': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
                 (entry) => day.dayEndTime < new Date(entry.to)
               )
             }
@@ -251,6 +235,7 @@ export default {
   width: 32px;
   transition: all 0.3s ease-in-out;
   user-select: none;
+  border-radius: var(--border-radius);
 }
 
 .prev-btn:hover::before,
@@ -261,6 +246,7 @@ export default {
   height: 32px;
   width: 32px;
   background-color: var(--primary-color);
+  border-radius: var(--border-radius);
   opacity: 0.8;
 }
 

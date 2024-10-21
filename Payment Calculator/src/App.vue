@@ -41,25 +41,14 @@ export default {
           return false;
         })
         .reverse();
+    },
+    handleCloseChangelogDiaglog() {
+      console.log('here');
+      localStorage.setItem('appVersion', packageJson.version);
     }
   },
   computed: {
-    ...mapStores(useUserDataStore),
-
-    selectedEntries(): Entry[] {
-      if (!this.selectedDate) {
-        return [];
-      }
-
-      return this.userDataStore.entries.filter((entry) => {
-        const entryFromDate = new Date(entry.from).setHours(0, 0, 0, 0);
-        const entryToDate = new Date(entry.to).setHours(0, 0, 0, 0);
-
-        const selectedDate = new Date(this.selectedDate).setHours(0, 0, 0, 0);
-
-        return entryFromDate <= selectedDate && selectedDate <= entryToDate;
-      });
-    }
+    ...mapStores(useUserDataStore)
   },
   components: {
     WeekSchedule,
@@ -85,8 +74,7 @@ export default {
 
     const currentVersion = localStorage.getItem('appVersion');
     if (currentVersion !== packageJson.version) {
-      localStorage.setItem('appVersion', packageJson.version);
-      (this.$refs.dialog as any).showModal();
+      (this.$refs['changelog-dialog'] as any).showModal();
     }
   }
 };
@@ -95,9 +83,9 @@ export default {
 <template>
   <WeekSchedule :entries="userDataStore.entries" v-model:selected-date="selectedDate" />
   <hr />
-  <DaySchedule :entries="selectedEntries" :selected-date="selectedDate" />
+  <DaySchedule :selected-date="selectedDate" />
 
-  <BaseDialog ref="dialog" title="What's new">
+  <BaseDialog ref="changelog-dialog" title="What's new" @close-dialog="handleCloseChangelogDiaglog">
     <div class="what-new">
       <div v-for="log in versionChanges()" :key="log.version">
         <div class="info">

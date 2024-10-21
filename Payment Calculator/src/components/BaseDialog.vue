@@ -11,7 +11,7 @@ export default {
     }
   },
   // Emitting events allows parent components to access methods in this component
-  emits: ['showModal'],
+  emits: ['showModal', 'closeDialog'],
   methods: {
     showModal() {
       const dialog = this.$refs.dialog as HTMLDialogElement;
@@ -26,6 +26,7 @@ export default {
         });
       }
       dialog.close();
+      this.$emit('closeDialog');
     }
   },
   mounted() {

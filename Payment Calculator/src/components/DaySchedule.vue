@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Entry, WorkInfos } from '@/types';
-import { currencyFormat, hourFormat, toTimeStr } from '@/utils';
+import { currencyFormat, hourFormat, toTimeStr, getEntries } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -11,7 +11,6 @@ import EntryForm from '@/components/EntryForm.vue';
 
 export default {
   props: {
-    entries: Array as () => Entry[],
     selectedDate: {
       type: Date,
       required: true
@@ -130,6 +129,18 @@ export default {
     ...mapStores(useUserDataStore),
     isCheckIn() {
       return this.userDataStore.checkInTime !== undefined;
+    },
+    entries() {
+      // from 12am on the given day
+      const from = new Date(this.selectedDate);
+      from.setHours(0, 0, 0, 0);
+
+      // to 12am on the next day
+      const to = new Date(this.selectedDate);
+      to.setDate(to.getDate() + 1);
+      to.setHours(0, 0, 0, 0);
+
+      return getEntries(this.userDataStore.entries, from, to);
     }
   },
   mounted() {

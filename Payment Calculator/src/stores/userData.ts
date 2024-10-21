@@ -63,10 +63,14 @@ export const useUserDataStore = defineStore('userData', {
     },
 
     handleStorageChange(event: any) {
-      console.log('Storage change detected', event.key, event.newValue, event.oldValue, event);
+      console.log(`Storage change detected: [${event.key}] ${event.oldValue} -> ${event.newValue}`, event);
       if (import.meta.env.DEV) {
-        (this as any)[event.key] = JSON.parse(event.newValue);
-        console.log('Parsed value:', (this as any)[event.key]);
+        try {
+          (this as any)[event.key] = JSON.parse(event.newValue);
+          console.log('Parsed value:', (this as any)[event.key]);
+        } catch (error) {
+          console.error('Failed to parse value:', event.newValue);
+        }
       } else {
         console.warn('Do not touch the storage, please. Reversing changes...');
       }
