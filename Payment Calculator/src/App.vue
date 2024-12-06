@@ -61,15 +61,13 @@ export default {
     // Run on update
     this.userDataStore.$subscribe((mutation, state) => {
       for (const [key, value] of Object.entries(state)) {
-        this.userDataStore.fixState(key, value);
-        this.userDataStore.saveToLocalStorage(key, value);
+        this.userDataStore.saveToLocalStorage(key, this.userDataStore.fixState(key, value));
       }
     });
 
     // Run once when mounted
     Object.entries(this.userDataStore.$state).forEach(([key, value]) => {
-      this.userDataStore.fixState(key, value);
-      this.userDataStore.saveToLocalStorage(key, value);
+      this.userDataStore.saveToLocalStorage(key, this.userDataStore.fixState(key, value));
     });
 
     const currentVersion = localStorage.getItem('appVersion');

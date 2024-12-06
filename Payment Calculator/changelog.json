@@ -88,5 +88,10 @@
       "[Fix] Duplicate entry calculations for multi-day durations",
       "[Feature] Update version only when the What's new dialog is closed"
     ]
+  },
+  {
+    "version": "0.3.5",
+    "date": "",
+    "changes": []
   }
 ]

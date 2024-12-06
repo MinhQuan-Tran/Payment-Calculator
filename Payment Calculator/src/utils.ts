@@ -1,4 +1,4 @@
-import type { Entry } from '@/types';
+import type { Duration, Entry } from '@/types';
 
 export function currencyFormat(value: number): string {
   return Intl.NumberFormat([], {
@@ -7,12 +7,11 @@ export function currencyFormat(value: number): string {
   }).format(value);
 }
 
-export function hourFormat(hours: number): string {
-  return Intl.NumberFormat([], {
-    style: 'unit',
-    unit: 'hour',
-    maximumFractionDigits: 2
-  }).format(hours);
+export function hourMinuteFormat(time: Duration, style: string = 'narrow'): string {
+  return new Intl.DurationFormat([], {
+    style: style,
+    hoursDisplay: 'always'
+  }).format(time);
 }
 
 export function toTimeStr(date: Date): string {
@@ -21,17 +20,21 @@ export function toTimeStr(date: Date): string {
   });
 }
 
-export function getWorkHours(entry: Entry, fromLimit?: Date, toLimit?: Date): number {
+export function getWorkDuration(entry: Partial<Entry>, fromLimit?: Date, toLimit?: Date): Duration {
+  if (!entry.from || !entry.to) {
+    return undefined as unknown as Duration;
+  }
+
   // If the entry is outside the limits, use the limits instead
   const fromDate = fromLimit && entry.from < fromLimit ? fromLimit : new Date(entry.from);
   const toDate = toLimit && entry.to > toLimit ? toLimit : new Date(entry.to);
 
   const workTime = toDate.getTime() - fromDate.getTime();
-  const workHours = workTime / (1000 * 60 * 60);
 
-  console.log(fromDate, toDate, workHours);
+  const workHours = Math.floor(workTime / (1000 * 60 * 60));
+  const workMinutes = Math.floor((workTime % (1000 * 60 * 60)) / (1000 * 60));
 
-  return workHours;
+  return { hours: workHours, minutes: workMinutes } as Duration;
 }
 
 export function getEntries(entries: Entry[], from: Date, to: Date): Entry[] {

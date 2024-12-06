@@ -1,12 +1,13 @@
 <script lang="ts">
+import type { Entry, Duration } from '@/types';
+import { getWorkDuration } from '@/utils';
+
 import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
 import ButtonConfirm from './ButtonConfirm.vue';
 import ComboBox from './ComboBox.vue';
 import InputLabel from './InputLabel.vue';
-
-import type { Entry } from '@/types';
 
 export default {
   props: {
@@ -26,7 +27,17 @@ export default {
     };
   },
   computed: {
-    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos'])
+    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos']),
+
+    // TODO: Make UI for unpaid breaks
+
+    // Work hours remaining after unpaid breaks
+    workHoursRemain(): number {
+      return (
+        getWorkDuration(this.formData)?.hours -
+        (this.formData?.unpaidBreaks?.reduce((acc, curr) => acc + curr.hours, 0) || 0)
+      );
+    }
   },
   emits: {
     entryChange(payload: { action: string; entry: Entry }) {
@@ -35,6 +46,13 @@ export default {
     }
   },
   methods: {
+    getWorkDuration,
+
+    // Cannot use alert directly on event
+    alert(message: string) {
+      alert(message);
+    },
+
     entryAction(event: Event) {
       const form = event.currentTarget as HTMLFormElement;
 
@@ -170,8 +188,6 @@ export default {
           placeholder="e.g. RestaurantName"
           v-model="formData.workplace"
           required
-          list="workplace-list"
-          autocomplete="off"
         />
       </ComboBox>
     </InputLabel>
@@ -198,8 +214,6 @@ export default {
           min="0"
           max="1000"
           required
-          list="pay-rate-list"
-          autocomplete="off"
         />
       </ComboBox>
     </InputLabel>
@@ -226,6 +240,57 @@ export default {
         @input="(event) => (formData.to = new Date((event.target as HTMLInputElement).value))"
         required
       />
+    </InputLabel>
+
+    <InputLabel label="Unpaid Break(s)">
+      <div v-for="(unpaidBreak, index) in formData.unpaidBreaks" :key="index">
+        <!-- Hours -->
+        <ComboBox
+          :value="unpaidBreak.hours?.toString()"
+          @update:value="
+            (hours) => {
+              !isNaN(Number(hours))
+                ? (formData.unpaidBreaks![index].hours = Number(hours))
+                : alert('Invalid input: Please enter a valid number.');
+            }
+          "
+          :list="[...Array(workHoursRemain + 1).keys()].map(String)"
+        >
+          <input
+            type="number"
+            name="unpaidBreak-hours"
+            placeholder="hours"
+            v-model="formData.unpaidBreaks![index].hours"
+            step="1"
+            min="0"
+            max="24"
+          />
+        </ComboBox>
+
+        <!-- Minutes (0, 15, 30, 45) -->
+        <ComboBox
+          :value="unpaidBreak.minutes?.toString()"
+          @update:value="
+            (minutes) => {
+              !isNaN(Number(minutes))
+                ? (formData.unpaidBreaks![index].minutes = Number(minutes))
+                : alert('Invalid input: Please enter a valid number.');
+            }
+          "
+          :list="[...Array(4).keys()].map((i) => (i * 15).toString())"
+        >
+          <input
+            type="number"
+            name="unpaidBreak-minutes"
+            placeholder="minutes"
+            v-model="formData.unpaidBreaks![index].minutes"
+            step="1"
+            min="0"
+            max="59"
+          />
+        </ComboBox>
+      </div>
+      <button type="button" @click="(formData.unpaidBreaks ??= [] as Duration[]).push({} as Duration)">+</button>
     </InputLabel>
 
     <div ref="actionBar" class="actions">

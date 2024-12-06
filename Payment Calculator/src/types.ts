@@ -1,9 +1,15 @@
+export type Duration = {
+  hours: number;
+  minutes: number;
+};
+
 export type Entry = {
   id: number;
   workplace: string;
   payRate: number;
   from: Date;
   to: Date;
+  unpaidBreaks: Duration[];
 };
 
 export type WorkInfos = {
@@ -22,7 +28,7 @@ export type Day = {
 export type Week = {
   days: Day[];
   summaries: {
-    totalHours: number;
-    net: number;
+    income: number;
+    totalHours: Duration;
   };
 };

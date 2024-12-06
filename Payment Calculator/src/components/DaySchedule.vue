@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { Entry, WorkInfos } from '@/types';
-import { currencyFormat, hourFormat, toTimeStr, getEntries } from '@/utils';
+import type { Duration, Entry, WorkInfos } from '@/types';
+import { currencyFormat, hourMinuteFormat, toTimeStr, getEntries } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -38,18 +38,20 @@ export default {
   },
   methods: {
     currencyFormat,
-    hourFormat,
+    hourMinuteFormat,
     toTimeStr,
 
-    hourDiff(entry: Entry) {
+    timeDiff(entry: Entry): Duration {
       const fromTime = entry.from.getTime();
       const toTime = entry.to.getTime();
       const diff = toTime - fromTime;
-      return diff / 1000 / 60 / 60;
+      const hours = Math.floor(diff / 1000 / 60 / 60);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      return { hours, minutes } as Duration;
     },
 
     entryTotalPay(entry: Entry) {
-      const hours = this.hourDiff(entry);
+      const hours = this.timeDiff(entry).hours + this.timeDiff(entry).minutes / 60;
       return entry.payRate * hours;
     },
 
@@ -130,6 +132,7 @@ export default {
     isCheckIn() {
       return this.userDataStore.checkInTime !== undefined;
     },
+
     entries() {
       // from 12am on the given day
       const from = new Date(this.selectedDate);
@@ -222,7 +225,7 @@ export default {
           <div class="total">{{ currencyFormat(entryTotalPay(entry)) }}</div>
           <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
           <div class="hour-diff">
-            {{ hourFormat(hourDiff(entry)) }}
+            {{ hourMinuteFormat(timeDiff(entry), 'short') }}
           </div>
         </div>
       </div>
