@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Entry, Duration } from '@/types';
-import { getWorkDuration } from '@/utils';
+import { entryDuration, deepClone } from '@/utils';
 
 import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -13,7 +13,7 @@ export default {
   props: {
     entry: {
       type: Object as () => Partial<Entry>,
-      default: () => ({}) as Entry
+      default: () => ({}) as Partial<Entry>
     },
     action: {
       type: String,
@@ -22,21 +22,22 @@ export default {
   },
   data() {
     return {
-      formData: this.entry,
+      formData: deepClone<Partial<Entry>>(this.entry),
       hiddenElements: [] as Element[]
     };
   },
   computed: {
     ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos']),
 
-    // TODO: Make UI for unpaid breaks
-
     // Work hours remaining after unpaid breaks
     workHoursRemain(): number {
-      return (
-        getWorkDuration(this.formData)?.hours -
-        (this.formData?.unpaidBreaks?.reduce((acc, curr) => acc + curr.hours, 0) || 0)
-      );
+      if (!this.formData.from || !this.formData.to) {
+        return 0;
+      }
+
+      const formData = deepClone<Partial<Entry>>(this.formData) as Pick<Entry, 'from' | 'to' | 'unpaidBreaks'>;
+
+      return entryDuration(formData)?.hours - (formData.unpaidBreaks?.reduce((acc, curr) => acc + curr.hours, 0) || 0);
     }
   },
   emits: {
@@ -46,8 +47,6 @@ export default {
     }
   },
   methods: {
-    getWorkDuration,
-
     // Cannot use alert directly on event
     alert(message: string) {
       alert(message);
@@ -126,7 +125,7 @@ export default {
     },
 
     resetForm() {
-      this.formData = this.entry;
+      this.formData = deepClone<Partial<Entry>>(this.entry);
     },
 
     focusButtonConfirm(isHolding: boolean) {
@@ -243,7 +242,7 @@ export default {
     </InputLabel>
 
     <InputLabel label="Unpaid Break(s)">
-      <div v-for="(unpaidBreak, index) in formData.unpaidBreaks" :key="index">
+      <div v-for="(unpaidBreak, index) in formData.unpaidBreaks" :key="index" class="unpaid-break">
         <!-- Hours -->
         <ComboBox
           :value="unpaidBreak.hours?.toString()"
@@ -289,6 +288,11 @@ export default {
             max="59"
           />
         </ComboBox>
+
+        <!-- Delete button -->
+        <button class="delete-btn danger" type="button" @click="formData.unpaidBreaks?.splice(index, 1)">
+          <div class="icons8-close"></div>
+        </button>
       </div>
       <button type="button" @click="(formData.unpaidBreaks ??= [] as Duration[]).push({} as Duration)">+</button>
     </InputLabel>
@@ -300,16 +304,16 @@ export default {
           type="submit"
           name="action"
           value="delete"
-          class="danger-btn"
+          class="danger"
           formnovalidate
         >
           Delete
         </ButtonConfirm>
-        <button type="submit" name="action" value="edit">Edit Entry</button>
+        <button type="submit" name="action" value="edit" class="warning">Edit Entry</button>
       </template>
 
       <template v-else-if="action == 'add'">
-        <button type="submit" name="action" value="add">Add Entry</button>
+        <button type="submit" name="action" value="add" class="primary">Add Entry</button>
       </template>
 
       <template v-else-if="action == 'check in/out'">
@@ -318,12 +322,12 @@ export default {
           type="submit"
           name="action"
           value="remove check in"
-          class="danger-btn"
+          class="danger"
           formnovalidate
         >
           Remove
         </ButtonConfirm>
-        <button type="submit" name="action" value="check in">Add Entry</button>
+        <button type="submit" name="action" value="check in" class="primary">Add Entry</button>
       </template>
     </div>
   </form>
@@ -344,7 +348,7 @@ export default {
   flex: 1;
 }
 
-.actions .danger-btn {
+.actions .danger {
   flex-grow: 0;
 }
 
@@ -355,5 +359,22 @@ export default {
 .hide {
   max-width: 0;
   padding: 0;
+}
+
+.unpaid-break {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: var(--padding-small);
+}
+
+.unpaid-break > * {
+  flex: 1;
+}
+
+.unpaid-break .delete-btn {
+  flex-grow: 0;
+  box-sizing: border-box;
 }
 </style>

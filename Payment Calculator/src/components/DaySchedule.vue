@@ -1,6 +1,15 @@
 <script lang="ts">
-import type { Duration, Entry, WorkInfos } from '@/types';
-import { currencyFormat, hourMinuteFormat, toTimeStr, getEntries } from '@/utils';
+import type { Entry } from '@/types';
+import {
+  currencyFormat,
+  hourMinuteFormat,
+  toTimeStr,
+  getEntries,
+  entryDuration,
+  entryBillableTime,
+  entryTotalPay,
+  sumDuration
+} from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -40,20 +49,10 @@ export default {
     currencyFormat,
     hourMinuteFormat,
     toTimeStr,
-
-    timeDiff(entry: Entry): Duration {
-      const fromTime = entry.from.getTime();
-      const toTime = entry.to.getTime();
-      const diff = toTime - fromTime;
-      const hours = Math.floor(diff / 1000 / 60 / 60);
-      const minutes = Math.floor((diff / 1000 / 60) % 60);
-      return { hours, minutes } as Duration;
-    },
-
-    entryTotalPay(entry: Entry) {
-      const hours = this.timeDiff(entry).hours + this.timeDiff(entry).minutes / 60;
-      return entry.payRate * hours;
-    },
+    entryDuration,
+    entryBillableTime,
+    entryTotalPay,
+    sumDuration,
 
     handleEditEntry(entry: Entry) {
       this.selectedEntry = entry;
@@ -159,20 +158,20 @@ export default {
 <template>
   <div class="day-schedule">
     <div class="actions">
-      <button @click="($refs.clearEntriesDialog as any).showModal()" class="danger-btn" id="clear-btn">Clear</button>
+      <button @click="($refs.clearEntriesDialog as any).showModal()" class="danger" id="clear-btn">Clear</button>
 
       <Transition>
         <button
           v-if="selectedDate.setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0)"
           @click="handleCheckInOut"
           id="check-in-out-btn"
-          :class="{ 'warning-btn': isCheckIn }"
+          :class="{ primary: !isCheckIn, warning: isCheckIn }"
         >
           Check {{ isCheckIn ? 'Out' : 'In' }}
         </button>
       </Transition>
 
-      <button @click="handleAddEntry" class="success-btn" id="add-btn">Add Entry</button>
+      <button @click="handleAddEntry" class="success" id="add-btn">Add Entry</button>
     </div>
 
     <div class="entry-list">
@@ -187,7 +186,6 @@ export default {
         })"
         :key="entry.id"
         class="entry"
-        @click="handleEditEntry(entry)"
       >
         <div class="datetime">
           <div class="from">
@@ -220,14 +218,37 @@ export default {
           </div>
         </div>
         <div class="divider"></div>
-        <div class="info">
-          <div class="workplace">{{ entry.workplace }}</div>
-          <div class="total">{{ currencyFormat(entryTotalPay(entry)) }}</div>
-          <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
-          <div class="hour-diff">
-            {{ hourMinuteFormat(timeDiff(entry), 'short') }}
-          </div>
-        </div>
+        <details class="info">
+          <summary>
+            <div class="summary">
+              <div class="workplace">{{ entry.workplace }}</div>
+              <!-- <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div> -->
+              <div class="billable-time">
+                {{ hourMinuteFormat(entryBillableTime(entry), 'short') }}
+                <img
+                  width="48"
+                  height="48"
+                  src="https://img.icons8.com/fluency/48/time-card.png"
+                  alt="time-card"
+                  class="inline-icon"
+                />
+              </div>
+              <div class="earning">{{ currencyFormat(entryTotalPay(entry)) }}</div>
+              <div class="unpaid-breaks">
+                {{ hourMinuteFormat(sumDuration(entry.unpaidBreaks), 'short') }}
+                <img
+                  width="48"
+                  height="48"
+                  src="https://img.icons8.com/fluency/48/tea.png"
+                  alt="tea"
+                  class="inline-icon"
+                />
+              </div>
+            </div>
+          </summary>
+          <!-- TODO: Add Hourly Rate, Shift Duration (Before Breaks), Notes or Description -->
+          <!-- TODO: Add actions Edit, Delete -->
+        </details>
       </div>
     </div>
 
@@ -235,7 +256,7 @@ export default {
       ref="clearEntriesDialog"
       title="Clear Entries"
       open-dialog-text="Clear"
-      class="danger-btn"
+      class="danger"
       :reset-forms="true"
     >
       <ClearEntriesForm :selected-date="selectedDate" />
@@ -268,7 +289,6 @@ export default {
   flex-direction: row;
   align-items: stretch;
   justify-content: start;
-  cursor: pointer;
   text-wrap: balance;
   text-wrap: pretty;
   word-break: break-word;
@@ -304,11 +324,23 @@ export default {
 
 .info {
   flex: 1;
+}
+
+.info summary::marker,
+.info summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.info summary {
+  list-style: none;
+}
+
+.summary {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-areas:
-    'workplace total'
-    'pay-rate hour-diff';
+    'workplace billable-time'
+    'earning   unpaid-breaks';
   gap: var(--padding);
   justify-items: stretch;
   justify-content: stretch;
@@ -318,34 +350,36 @@ export default {
   padding: var(--padding);
   border-radius: 0 var(--border-radius) var(--border-radius) 0;
   margin: var(--divider-border-radius) 0;
+  position: relative;
+  cursor: pointer;
 }
-.info > * {
+
+.summary > * {
   text-wrap: balance;
   text-wrap: pretty;
   word-break: break-word;
   overflow-wrap: break-word;
 }
 
-.info > *:nth-child(2n) {
+.summary > *:nth-child(2n) {
   text-align: right;
 }
 
-.info .workplace {
+.summary .workplace {
   grid-area: workplace;
   font-weight: bold;
 }
 
-.info .total {
-  grid-area: total;
-  font-weight: bold;
+.summary .earning {
+  grid-area: earning;
 }
 
-.info .pay-rate {
-  grid-area: pay-rate;
+.summary .billable-time {
+  grid-area: billable-time;
 }
 
-.info .hour-diff {
-  grid-area: hour-diff;
+.summary .unpaid-breaks {
+  grid-area: unpaid-breaks;
 }
 
 .actions {

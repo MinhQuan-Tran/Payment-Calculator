@@ -64,7 +64,7 @@ export default {
           @click="$emit('update:value', itemName)"
         >
           {{ itemName }}
-          <button class="delete-btn" v-if="deletable" @click.stop="$emit('delete-item', itemName)">
+          <button class="delete-btn danger" type="button" v-if="deletable" @click.stop="$emit('delete-item', itemName)">
             <div class="icons8-close"></div>
           </button>
         </div>
@@ -140,7 +140,6 @@ export default {
 }
 
 .list .item .delete-btn {
-  --button-color: var(--danger-color);
   font-size: inherit;
   height: 1.5em;
   width: 1.5em;

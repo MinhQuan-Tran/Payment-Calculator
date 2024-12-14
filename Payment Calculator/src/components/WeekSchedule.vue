@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Entry, Week, Day, Duration } from '@/types';
-import { currencyFormat, hourMinuteFormat, getWorkDuration, getEntries } from '@/utils';
+import { currencyFormat, hourMinuteFormat, entryBillableTime, getEntries } from '@/utils';
 
 export default {
   props: {
@@ -69,14 +69,15 @@ export default {
         const entries = getEntries(this.entries, from, to);
 
         week.summaries.income += entries.reduce(
-          (acc, entry) => (acc += (getWorkDuration(entry).hours + getWorkDuration(entry).minutes / 60) * entry.payRate),
+          (acc, entry) =>
+            (acc += (entryBillableTime(entry).hours + entryBillableTime(entry).minutes / 60) * entry.payRate),
           0
         );
 
         week.summaries.totalHours = entries.reduce(
           (acc, entry) => {
-            acc.hours += getWorkDuration(entry).hours;
-            acc.minutes += getWorkDuration(entry).minutes;
+            acc.hours += entryBillableTime(entry).hours;
+            acc.minutes += entryBillableTime(entry).minutes;
             return acc;
           },
           { hours: 0, minutes: 0 } as Duration
@@ -112,7 +113,7 @@ export default {
   },
   methods: {
     currencyFormat,
-    getWorkDuration,
+    entryBillableTime,
     getEntries,
 
     updateTitleByMonth() {
