@@ -142,6 +142,10 @@ export default {
       to.setDate(to.getDate() + 1);
       to.setHours(0, 0, 0, 0);
 
+      console.log('Updating entries');
+
+      this.$forceUpdate();
+
       return getEntries(this.userDataStore.entries, from, to);
     }
   },
@@ -178,11 +182,8 @@ export default {
       <!-- TODO: Seperate to Entry component -->
       <div
         v-for="entry in entries!.sort((a: Entry, b: Entry) => {
-          if (new Date(a.from) < new Date(b.from)) {
-            return -1;
-          } else {
-            return 1;
-          }
+          // Sort by from time, then by to time
+          return a.from.getTime() - b.from.getTime() || a.to.getTime() - b.to.getTime();
         })"
         :key="entry.id"
         class="entry"
@@ -218,36 +219,39 @@ export default {
           </div>
         </div>
         <div class="divider"></div>
+        <!-- Allow user to open multiple entries to compare -->
         <details class="info">
           <summary>
-            <div class="summary">
-              <div class="workplace">{{ entry.workplace }}</div>
-              <!-- <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div> -->
-              <div class="billable-time">
-                {{ hourMinuteFormat(entryBillableTime(entry), 'short') }}
-                <img
-                  width="48"
-                  height="48"
-                  src="https://img.icons8.com/fluency/48/time-card.png"
-                  alt="time-card"
-                  class="inline-icon"
-                />
-              </div>
-              <div class="earning">{{ currencyFormat(entryTotalPay(entry)) }}</div>
-              <div class="unpaid-breaks">
-                {{ hourMinuteFormat(sumDuration(entry.unpaidBreaks), 'short') }}
-                <img
-                  width="48"
-                  height="48"
-                  src="https://img.icons8.com/fluency/48/tea.png"
-                  alt="tea"
-                  class="inline-icon"
-                />
-              </div>
+            <div class="workplace">{{ entry.workplace }}</div>
+            <div class="billable-time">
+              {{ hourMinuteFormat(entryBillableTime(entry), 'short') }}
+              <img
+                width="48"
+                height="48"
+                src="https://img.icons8.com/fluency/48/time-card.png"
+                alt="time-card"
+                class="inline-icon"
+              />
+            </div>
+            <div class="earning">{{ currencyFormat(entryTotalPay(entry)) }}</div>
+            <div class="unpaid-breaks">
+              {{ hourMinuteFormat(sumDuration(entry.unpaidBreaks), 'short') }}
+              <img
+                width="48"
+                height="48"
+                src="https://img.icons8.com/fluency/48/tea.png"
+                alt="tea"
+                class="inline-icon"
+              />
             </div>
           </summary>
-          <!-- TODO: Add Hourly Rate, Shift Duration (Before Breaks), Notes or Description -->
-          <!-- TODO: Add actions Edit, Delete -->
+          <div class="details">
+            <!-- TODO: Add Hourly Rate, Shift Duration (Before Breaks), Notes or Description -->
+            <div class="secondary-info">
+              <div class="hourly-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
+            </div>
+            <!-- TODO: Add actions Edit, Delete -->
+          </div>
         </details>
       </div>
     </div>
@@ -275,118 +279,12 @@ export default {
   align-items: stretch;
 }
 
-.entry-list {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  margin: var(--padding) 0;
-  gap: 0.75em;
-}
-
-.entry-list .entry {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: start;
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  --divider-width: 4px;
-  --divider-border-radius: calc(var(--divider-width) / 2);
-}
-
-.divider {
-  align-self: stretch;
-  width: var(--divider-width);
-  border-radius: var(--divider-border-radius);
-  background: var(--primary-color);
-}
-
-.datetime {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1em;
-  align-items: stretch;
-  text-align: right;
-  width: v-bind('datetimeWidth');
-  padding-right: var(--padding);
-  white-space: nowrap;
-}
-
-.datetime .date {
-  font-size: smaller;
-  font-weight: bold;
-  opacity: 0.5;
-}
-
-.info {
-  flex: 1;
-}
-
-.info summary::marker,
-.info summary::-webkit-details-marker {
-  display: none !important;
-}
-
-.info summary {
-  list-style: none;
-}
-
-.summary {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'workplace billable-time'
-    'earning   unpaid-breaks';
-  gap: var(--padding);
-  justify-items: stretch;
-  justify-content: stretch;
-  align-items: center;
-  align-content: space-between;
-  background-color: var(--input-background-color);
-  padding: var(--padding);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  margin: var(--divider-border-radius) 0;
-  position: relative;
-  cursor: pointer;
-}
-
-.summary > * {
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.summary > *:nth-child(2n) {
-  text-align: right;
-}
-
-.summary .workplace {
-  grid-area: workplace;
-  font-weight: bold;
-}
-
-.summary .earning {
-  grid-area: earning;
-}
-
-.summary .billable-time {
-  grid-area: billable-time;
-}
-
-.summary .unpaid-breaks {
-  grid-area: unpaid-breaks;
-}
-
 .actions {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--gap-horizontal);
+  margin-bottom: var(--padding);
 }
 
 .actions > * {
@@ -407,5 +305,146 @@ export default {
 .actions #check-in-out-btn.v-leave-to {
   flex-grow: 0;
   width: 0;
+}
+
+.entry-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: var(--padding) 0;
+  gap: calc(var(--padding) * 2);
+}
+
+.entry-list .entry {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: start;
+  text-wrap: balance;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  --divider-width: 4px;
+  /* --divider-border-radius: calc(var(--divider-width) / 2); */
+  border-radius: var(--border-radius);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
+  transition: all 0.3s;
+}
+
+.entry-list .entry:hover,
+.entry-list .entry:has(.info[open]) {
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.8);
+}
+
+.entry-list:has(.info[open]) .entry:not(:has(.info[open])) {
+  opacity: 0.5;
+}
+
+.divider {
+  align-self: stretch;
+  width: var(--divider-width);
+  /* border-radius: var(--divider-border-radius); */
+  background: var(--primary-color);
+}
+
+.datetime {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: stretch;
+  text-align: right;
+  gap: 1em;
+  width: v-bind('datetimeWidth');
+  padding: var(--padding-small) var(--padding);
+  border-radius: var(--border-radius) 0 0 var(--border-radius);
+  white-space: nowrap;
+  background-color: var(--input-background-color);
+}
+
+.datetime .date {
+  font-size: smaller;
+  font-weight: bold;
+  opacity: 0.5;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  background: light-dark(#d8d8d8, #343434);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  padding: 0;
+  transition: all 0.3s;
+}
+
+.info summary::marker,
+.info summary::-webkit-details-marker {
+  display: none !important;
+}
+
+.info summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'workplace billable-time'
+    'earning   unpaid-breaks';
+  gap: var(--padding);
+  justify-items: stretch;
+  justify-content: stretch;
+  align-items: center;
+  align-content: space-between;
+  background-color: var(--input-background-color);
+  padding: var(--padding);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.info summary > * {
+  text-wrap: balance;
+  text-wrap: pretty;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.info summary > *:nth-child(2n) {
+  text-align: right;
+}
+
+.info summary .workplace {
+  grid-area: workplace;
+  font-weight: bold;
+}
+
+.info summary .earning {
+  grid-area: earning;
+}
+
+.info summary .billable-time {
+  grid-area: billable-time;
+}
+
+.info summary .unpaid-breaks {
+  grid-area: unpaid-breaks;
+}
+
+.info[open] summary {
+  transition: all 0.3s;
+  flex-grow: 1;
+}
+
+.details {
+  display: grid;
+  padding: var(--padding);
+  border-radius: 0 0 var(--border-radius) 0;
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.26s ease;
+}
+
+.info[open] .details {
+  transform: scaleY(1);
 }
 </style>

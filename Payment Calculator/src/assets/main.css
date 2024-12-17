@@ -80,10 +80,12 @@ button {
   transition: all 0.3s ease-in-out;
   background: var(--button-color);
   color: var(--text-color);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
 }
 
 button:hover {
   opacity: 0.8;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.8);
 }
 
 .primary {

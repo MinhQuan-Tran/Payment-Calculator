@@ -223,8 +223,14 @@ export default {
         id="from"
         name="from"
         :value="toDateTimeLocal(formData.from)"
-        :max="toDateTimeLocal(formData.to)"
-        @input="(event) => (formData.from = new Date((event.target as HTMLInputElement).value))"
+        @input="
+          (event) => {
+            formData.from = new Date((event.target as HTMLInputElement).value);
+            if (formData.to && formData.from > formData.to) {
+              formData.to = formData.from;
+            }
+          }
+        "
         required
       />
     </InputLabel>

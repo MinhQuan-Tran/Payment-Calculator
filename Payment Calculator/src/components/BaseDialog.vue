@@ -108,8 +108,12 @@ dialog::backdrop {
   font-weight: normal;
   background: transparent;
   user-select: none;
-  color: var(--text-color);
   width: auto;
+}
+
+.close-btn,
+.close-btn:hover {
+  box-shadow: none;
 }
 
 .divider {

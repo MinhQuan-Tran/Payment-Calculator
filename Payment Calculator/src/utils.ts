@@ -70,9 +70,10 @@ export function getEntries(entries: Entry[], from: Date, to: Date): Entry[] {
 }
 
 export function sumDuration(durations: Duration[]): Duration {
-  const totalMinutes = durations.reduce((acc, duration) => {
-    return acc + duration.hours * 60 + duration.minutes;
-  }, 0);
+  const totalMinutes =
+    durations?.reduce((acc, duration) => {
+      return acc + duration.hours * 60 + duration.minutes;
+    }, 0) ?? 0;
 
   return {
     hours: Math.floor(totalMinutes / 60),

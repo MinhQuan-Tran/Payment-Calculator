@@ -260,16 +260,27 @@ export default {
   border-radius: var(--border-radius);
 }
 
+.prev-btn,
+.next-btn,
+.prev-btn:hover,
+.next-btn:hover {
+  box-shadow: none;
+}
+
 .prev-btn:hover::before,
 .next-btn:hover::before {
   content: '';
   position: absolute;
-  z-index: -1;
   height: 32px;
   width: 32px;
   background-color: var(--primary-color);
   border-radius: var(--border-radius);
   opacity: 0.8;
+}
+
+.prev-btn img,
+.next-btn img {
+  z-index: 1;
 }
 
 .prev-btn {
@@ -313,7 +324,7 @@ export default {
 }
 
 .selected {
-  border: 1px solid lightgrey !important;
+  border: 1.5px solid light-dark(black, lightgrey) !important;
 }
 
 .week-day,
