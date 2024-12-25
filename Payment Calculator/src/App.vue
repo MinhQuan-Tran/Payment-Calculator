@@ -16,7 +16,19 @@ export default {
       openChangelogDialog: Function
     };
   },
+
   methods: {
+    downloadData() {
+      const data = JSON.stringify(localStorage.getItem('entries'));
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'localStorageData.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+
     versionChanges(): {
       version: string;
       date: string;
@@ -46,6 +58,7 @@ export default {
       localStorage.setItem('appVersion', packageJson.version);
     }
   },
+
   computed: {
     ...mapStores(useUserDataStore)
   },
@@ -54,6 +67,7 @@ export default {
     DaySchedule,
     BaseDialog
   },
+
   mounted() {
     window.addEventListener('storage', this.userDataStore.handleStorageChange);
 
@@ -80,6 +94,7 @@ export default {
 </script>
 
 <template>
+  <button id="downloadButton" @click="downloadData">Download localStorage Data</button>
   <WeekSchedule v-model:selected-date="selectedDate" />
   <hr />
   <DaySchedule :selected-date="selectedDate" />
