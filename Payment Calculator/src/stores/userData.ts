@@ -5,23 +5,26 @@ import { Duration, Entry } from '@/classes';
 export const useUserDataStore = defineStore('userData', {
   state: () => ({
     entries: (localStorage.getItem('entries')
-      ? JSON.parse(localStorage.getItem('entries')!).map((entry: any) => {
-          try {
-            return new Entry(
-              entry.id || entry._id,
-              entry.workplace || entry._workplace,
-              entry.payRate || entry._payRate,
-              new Date(entry.from || entry._from),
-              new Date(entry.to || entry._to),
-              entry.unpaidBreaks?.map((breakTime: any) => Object.assign(new Duration(), breakTime)) ??
-                entry._unpaidBreaks?.map((breakTime: any) => Object.assign(new Duration(), breakTime)) ??
-                []
-            );
-          } catch (error) {
-            console.error('Failed to parse entry:', entry);
-            console.error('Error:', error);
-          }
-        })
+      ? JSON.parse(localStorage.getItem('entries')!)
+          .filter((entry: any) => entry !== null)
+          .map((entry: any) => {
+            try {
+              console.log('Parsing entry:', entry);
+              return new Entry(
+                entry.id || entry._id,
+                entry.workplace || entry._workplace,
+                entry.payRate || entry._payRate,
+                new Date(entry.from || entry._from),
+                new Date(entry.to || entry._to),
+                entry.unpaidBreaks?.map((breakTime: any) => Object.assign(new Duration(), breakTime)) ??
+                  entry._unpaidBreaks?.map((breakTime: any) => Object.assign(new Duration(), breakTime)) ??
+                  []
+              );
+            } catch (error) {
+              console.error('Failed to parse entry:', entry);
+              console.error('Error:', error);
+            }
+          })
       : []) as Array<Entry>,
 
     checkInTime: (localStorage.getItem('checkInTime') ? new Date(localStorage.getItem('checkInTime')!) : undefined) as
