@@ -55,6 +55,27 @@ export default {
     BaseDialog
   },
   mounted() {
+    // Download data from localStorage
+    // Convert localStorage to JSON
+    const localStorageData = JSON.stringify(localStorage);
+
+    // Create a Blob from the data
+    const blob = new Blob([localStorageData], { type: 'application/json' });
+
+    // Create a temporary link element
+    const link = document.createElement('a');
+
+    // Set the link's href to the Blob URL
+    link.href = URL.createObjectURL(blob);
+
+    // Set the download attribute with a file name
+    link.download = 'localStorageData.json';
+
+    // Append the link to the document, trigger a click, and remove it
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
     window.addEventListener('storage', this.userDataStore.handleStorageChange);
 
     // Run on update
