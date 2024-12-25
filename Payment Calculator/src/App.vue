@@ -12,6 +12,7 @@ import BaseDialog from '@/components/BaseDialog.vue';
 export default {
   data() {
     return {
+      isDev: import.meta.env.DEV,
       selectedDate: new Date(new Date().setHours(0, 0, 0, 0)),
       openChangelogDialog: Function
     };
@@ -19,7 +20,7 @@ export default {
 
   methods: {
     downloadData() {
-      const data = JSON.stringify(localStorage.getItem('entries'));
+      const data = JSON.stringify(localStorage);
       const blob = new Blob([data], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -27,6 +28,34 @@ export default {
       a.download = 'localStorageData.json';
       a.click();
       URL.revokeObjectURL(url);
+    },
+
+    uploadData(event: Event) {
+      const fileInput = event.target as HTMLInputElement;
+      const file = fileInput.files ? fileInput.files[0] : null;
+
+      if (!file) return; // Do nothing if no file is selected
+
+      const reader = new FileReader();
+
+      reader.onload = (e: ProgressEvent<FileReader>): void => {
+        try {
+          const data = JSON.parse(e.target?.result as string);
+
+          // Clear existing localStorage data and add new data
+          localStorage.clear();
+          Object.keys(data).forEach((key) => {
+            localStorage.setItem(key, data[key]);
+          });
+        } catch (error) {
+          // Silent error, you can add console.log for debugging
+          console.error('Invalid JSON file', error);
+        }
+
+        alert('Data imported successfully');
+      };
+
+      reader.readAsText(file);
     },
 
     versionChanges(): {
@@ -94,7 +123,8 @@ export default {
 </script>
 
 <template>
-  <button id="downloadButton" @click="downloadData">Download localStorage Data</button>
+  <input type="file" id="fileInput" accept=".json" @change="uploadData" v-if="isDev" />
+  <button id="downloadButton" @click="downloadData">Download Data</button>
   <WeekSchedule v-model:selected-date="selectedDate" />
   <hr />
   <DaySchedule :selected-date="selectedDate" />

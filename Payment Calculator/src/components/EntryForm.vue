@@ -20,21 +20,25 @@ export default {
       required: true
     }
   },
+
   data() {
     return {
       formData: deepClone<Partial<Entry>>(this.entry),
       hiddenElements: [] as Element[]
     };
   },
+
   computed: {
     ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos'])
   },
+
   emits: {
     entryChange(payload: { action: string; entry: Entry }) {
       const actions = ['add', 'edit', 'delete', 'check in/out'];
       return actions.includes(payload.action);
     }
   },
+
   methods: {
     // Cannot use alert directly on event
     alert(message: string) {
@@ -55,7 +59,9 @@ export default {
           this.formData.payRate!,
           this.formData.from!,
           this.formData.to!,
-          this.formData.unpaidBreaks?.map((ub) => new Duration({ hours: ub.hours, minutes: ub.minutes })) ?? []
+          this.formData.unpaidBreaks
+            ?.map((ub) => new Duration({ hours: ub.hours, minutes: ub.minutes }))
+            .filter((ub) => ub.hours > 0 && ub.minutes > 0) ?? []
         );
       } catch (error) {
         alert('Invalid entry');
@@ -145,13 +151,23 @@ export default {
       const offset = date.getTimezoneOffset();
       const localDate = new Date(date.getTime() - offset * 60 * 1000);
       return localDate.toISOString().slice(0, 16);
+    },
+
+    addUnpaidBreak() {
+      if (!this.formData.unpaidBreaks) {
+        this.formData.unpaidBreaks = [] as Duration[];
+      }
+
+      this.formData.unpaidBreaks.push(new Duration());
     }
   },
+
   components: {
     ButtonConfirm,
     ComboBox,
     InputLabel
   },
+
   watch: {
     entry() {
       this.resetForm();
@@ -257,7 +273,13 @@ export default {
             type="number"
             name="unpaidBreak-hours"
             placeholder="hours"
-            v-model="formData.unpaidBreaks![index].hours"
+            :value="formData.unpaidBreaks![index].hours > 0 ? formData.unpaidBreaks![index].hours : ''"
+            @input="
+              (event) => {
+                const value = Number((event.target as HTMLInputElement).value);
+                formData.unpaidBreaks![index].hours = Math.min(value, 24);
+              }
+            "
             step="1"
             min="0"
             max="24"
@@ -280,7 +302,13 @@ export default {
             type="number"
             name="unpaidBreak-minutes"
             placeholder="minutes"
-            v-model="formData.unpaidBreaks![index].minutes"
+            :value="formData.unpaidBreaks![index].minutes > 0 ? formData.unpaidBreaks![index].minutes : ''"
+            @input="
+              (event) => {
+                const value = Number((event.target as HTMLInputElement).value);
+                formData.unpaidBreaks![index].minutes = Math.min(value, 59);
+              }
+            "
             step="1"
             min="0"
             max="59"
@@ -294,7 +322,7 @@ export default {
       </div>
 
       <!-- Add unpaid break -->
-      <button type="button" @click="(formData.unpaidBreaks ??= [] as Duration[]).push({} as Duration)">+</button>
+      <button type="button" @click="addUnpaidBreak">+</button>
     </InputLabel>
 
     <div ref="actionBar" class="actions">
