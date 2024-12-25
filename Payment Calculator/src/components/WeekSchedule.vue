@@ -1,13 +1,13 @@
 <script lang="ts">
-import type { Entry, Week, Day } from '@/types';
-import { currencyFormat, hourFormat, getWorkHours, getEntries } from '@/utils';
+import { Entry, Duration } from '@/classes';
+import type { Week, Day } from '@/types';
+import { currencyFormat, getEntries } from '@/utils';
+
+import { mapStores } from 'pinia';
+import { useUserDataStore } from '@/stores/userData';
 
 export default {
   props: {
-    entries: {
-      type: Array as () => Entry[],
-      required: true
-    },
     selectedDate: {
       type: Date,
       required: true
@@ -23,10 +23,11 @@ export default {
       today,
       monthChange: 0,
       spaceBetweenDay: '0px',
-      selectedWeekSummaryOption: 'netValue'
+      selectedWeekSummaryOption: 'income'
     };
   },
   computed: {
+    ...mapStores(useUserDataStore),
     calendar() {
       const changedDate = new Date(this.today);
       changedDate.setMonth(changedDate.getMonth() + this.monthChange);
@@ -49,8 +50,11 @@ export default {
         const week = {
           days: [] as Day[],
           summaries: {
-            net: 0,
-            totalHours: 0
+            income: 0,
+            totalHours: {
+              hours: 0,
+              minutes: 0
+            } as Duration
           }
         } as Week;
 
@@ -63,10 +67,18 @@ export default {
         to.setDate(to.getDate() + 7);
         to.setHours(0, 0, 0, 0);
 
-        const entries = getEntries(this.entries, from, to);
+        const entries = getEntries(this.userDataStore.entries as Array<Entry>, from, to);
 
-        week.summaries.net += entries.reduce((acc, entry) => (acc += getWorkHours(entry) * entry.payRate), 0);
-        week.summaries.totalHours += entries.reduce((acc, entry) => (acc += getWorkHours(entry)), 0);
+        week.summaries.income += entries.reduce((acc, entry) => (acc += entry.income), 0);
+
+        week.summaries.totalHours = entries.reduce(
+          (acc, entry) => {
+            acc.hours += entry.duration.hours;
+            acc.minutes += entry.duration.minutes;
+            return acc;
+          },
+          new Duration({ hours: 0, minutes: 0 })
+        );
 
         // Create the days of the week
         for (let i = 0; i < 7; i++) {
@@ -88,7 +100,7 @@ export default {
         }
 
         // Round the total to 2 decimal places
-        week.summaries.net = Math.round(week.summaries.net * 100) / 100;
+        week.summaries.income = Math.round(week.summaries.income * 100) / 100;
 
         calendar.push(week);
       }
@@ -98,7 +110,6 @@ export default {
   },
   methods: {
     currencyFormat,
-    getWorkHours,
     getEntries,
 
     updateTitleByMonth() {
@@ -119,10 +130,10 @@ export default {
 
     weekSummary(week: Week) {
       switch (this.selectedWeekSummaryOption) {
-        case 'netValue':
-          return currencyFormat(week.summaries.net);
+        case 'income':
+          return currencyFormat(week.summaries.income);
         case 'totalHours':
-          return hourFormat(week.summaries.totalHours);
+          return week.summaries.totalHours.format();
         default:
           return '';
       }
@@ -156,50 +167,62 @@ export default {
         <img src="@/components/icons/next.svg" alt="next" />
       </button>
     </div>
-    <div class="calendar">
-      <div class="week-day" v-for="day in weekDays" :key="day">{{ day }}</div>
-      <select v-model="selectedWeekSummaryOption" class="week-summary">
-        <option value="netValue" selected>NET Value</option>
-        <option value="totalHours">Hours</option>
-      </select>
 
-      <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
-        <div
-          v-for="(day, dayIndex) in week.days"
-          :key="dayIndex"
-          @click="$emit('update:selectedDate', day.dayStartTime)"
-          :class="[
-            'day-container',
-            {
-              // Compare the dates only
-              selected: selectedDate && selectedDate.getTime() === day.dayStartTime.getTime(),
-              'has-entry': getEntries(entries, day.dayStartTime, day.dayEndTime).length > 0,
-              'has-entry-past': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
-                (entry) => new Date(entry.from) < day.dayStartTime
-              ),
-              'has-entry-future': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
-                (entry) => day.dayEndTime < new Date(entry.to)
-              )
-            }
-          ]"
-        >
+    <div class="calendar-summaries">
+      <div class="calendar">
+        <div class="week-day" v-for="day in weekDays" :key="day">{{ day }}</div>
+
+        <template v-for="(week, weekIndex) in calendar" :key="weekIndex">
           <div
+            v-for="(day, dayIndex) in week.days"
+            :key="dayIndex"
+            @click="$emit('update:selectedDate', day.dayStartTime)"
             :class="[
-              'day',
+              'day-container',
               {
-                today: day.dayStartTime.getTime() === new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
-                'prev-month': day.prevMonth,
-                'next-month': day.nextMonth
+                // Compare the dates only
+                selected: selectedDate && selectedDate.getTime() === day.dayStartTime.getTime(),
+                'has-entry':
+                  getEntries(userDataStore.entries as Array<Entry>, day.dayStartTime, day.dayEndTime).length > 0,
+                'has-entry-past': getEntries(
+                  userDataStore.entries as Array<Entry>,
+                  day.dayStartTime,
+                  day.dayEndTime
+                ).some((entry) => new Date(entry.from) < day.dayStartTime),
+                'has-entry-future': getEntries(
+                  userDataStore.entries as Array<Entry>,
+                  day.dayStartTime,
+                  day.dayEndTime
+                ).some((entry) => day.dayEndTime < new Date(entry.to))
               }
             ]"
           >
-            {{ day.dayStartTime.getDate() }}
+            <div
+              :class="[
+                'day',
+                {
+                  today: day.dayStartTime.getTime() === new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
+                  'prev-month': day.prevMonth,
+                  'next-month': day.nextMonth
+                }
+              ]"
+            >
+              {{ day.dayStartTime.getDate() }}
+            </div>
           </div>
+        </template>
+      </div>
+
+      <div class="summaries">
+        <select v-model="selectedWeekSummaryOption" class="week-summary-options">
+          <option value="income" selected>Income</option>
+          <option value="totalHours">Hours</option>
+        </select>
+
+        <div class="summary" v-for="(week, weekIndex) in calendar" :key="weekIndex">
+          <span>{{ weekSummary(week) }}</span>
         </div>
-        <div class="summary">
-          {{ weekSummary(week) }}
-        </div>
-      </template>
+      </div>
     </div>
   </div>
 </template>
@@ -238,11 +261,17 @@ export default {
   border-radius: var(--border-radius);
 }
 
+.prev-btn,
+.next-btn,
+.prev-btn:hover,
+.next-btn:hover {
+  box-shadow: none;
+}
+
 .prev-btn:hover::before,
 .next-btn:hover::before {
   content: '';
   position: absolute;
-  z-index: -1;
   height: 32px;
   width: 32px;
   background-color: var(--primary-color);
@@ -250,14 +279,27 @@ export default {
   opacity: 0.8;
 }
 
+.prev-btn img,
+.next-btn img {
+  z-index: 1;
+}
+
 .prev-btn {
   transform: rotate(180deg);
 }
 
+.calendar-summaries {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--padding-small);
+}
+
 .calendar {
   display: grid;
-  grid-template-columns: repeat(7, 1fr) minmax(min-content, 2fr);
-  grid-auto-rows: 2.5em;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 2.5rem;
   text-align: center;
   width: 100%;
 }
@@ -283,7 +325,7 @@ export default {
 }
 
 .selected {
-  border: 1px solid lightgrey !important;
+  border: 1.5px solid light-dark(black, lightgrey) !important;
 }
 
 .week-day,
@@ -296,7 +338,26 @@ export default {
   color: var(--text-color-faded);
 }
 
-.week-summary {
+.summaries {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Cannot use fit-content in clamp() or min() */
+  min-width: fit-content;
+  width: 10ch;
+}
+
+@media screen and (min-width: 600px) {
+  .summaries {
+    width: 15ch;
+  }
+}
+
+.summaries > * {
+  height: 2.5rem;
+}
+
+.week-summary-options {
   background-color: var(--primary-color);
   color: var(--text-color-black);
   outline: none;
@@ -307,8 +368,10 @@ export default {
 }
 
 .summary {
-  text-align: left;
-  justify-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
   background-color: var(--primary-color);
   padding: 0 var(--padding-small);
   color: var(--text-color-black);

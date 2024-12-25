@@ -10,11 +10,11 @@
   --background-color: light-dark(#fafafa, #272727);
   --popup-background-color: light-dark(#fff, #303030);
   --input-background-color: light-dark(#f0f0f0, #414141);
-  --button-color: var(--primary-color);
+  --button-color: light-dark(#ededed, #686868);
   --text-color-white: #fff;
   --text-color-black: #000;
   --text-color: light-dark(var(--text-color-black), var(--text-color-white));
-  --text-color-opposite: light-dark(var(--text-color-white), var(--text-color-black));
+  --text-color-inverse: light-dark(var(--text-color-white), var(--text-color-black));
   --text-color-faded: light-dark(rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 0.5));
   --hover-overlay: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1));
 
@@ -79,11 +79,38 @@ button {
   font-weight: bold;
   transition: all 0.3s ease-in-out;
   background: var(--button-color);
-  color: var(--text-color-black);
+  color: var(--text-color);
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
 }
 
 button:hover {
   opacity: 0.8;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.8);
+}
+
+.primary {
+  --button-color: var(--primary-color) !important;
+  --text-color: var(--text-color-black) !important;
+}
+
+.warning {
+  --button-color: var(--warning-color) !important;
+  --text-color: var(--text-color-black) !important;
+}
+
+.danger {
+  --button-color: var(--danger-color) !important;
+  --text-color: var(--text-color-black) !important;
+}
+
+.success {
+  --button-color: var(--success-color) !important;
+  --text-color: var(--text-color-black) !important;
+}
+
+button.danger {
+  flex-grow: 0;
+  flex-shrink: 1;
 }
 
 .icons8-close {
@@ -101,16 +128,10 @@ button:hover {
   }
 }
 
-.warning-btn {
-  --button-color: var(--warning-color) !important;
-}
-
-.danger-btn {
-  --button-color: var(--danger-color) !important;
-}
-
-.success-btn {
-  --button-color: var(--success-color) !important;
+.inline-icon {
+  height: 1.3em;
+  width: 1.3em;
+  vertical-align: middle;
 }
 
 form .actions {

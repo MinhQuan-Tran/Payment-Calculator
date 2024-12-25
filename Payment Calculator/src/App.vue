@@ -1,7 +1,6 @@
 <script lang="ts">
 import packageJson from '@/../package.json';
 import changelog from '@/../changelog.json';
-import type { Entry } from '@/types';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -61,14 +60,14 @@ export default {
     // Run on update
     this.userDataStore.$subscribe((mutation, state) => {
       for (const [key, value] of Object.entries(state)) {
-        this.userDataStore.fixState(key, value);
+        // this.userDataStore.saveToLocalStorage(key, this.userDataStore.fixState(key, value));
         this.userDataStore.saveToLocalStorage(key, value);
       }
     });
 
     // Run once when mounted
     Object.entries(this.userDataStore.$state).forEach(([key, value]) => {
-      this.userDataStore.fixState(key, value);
+      // this.userDataStore.saveToLocalStorage(key, this.userDataStore.fixState(key, value));
       this.userDataStore.saveToLocalStorage(key, value);
     });
 
@@ -81,7 +80,7 @@ export default {
 </script>
 
 <template>
-  <WeekSchedule :entries="userDataStore.entries" v-model:selected-date="selectedDate" />
+  <WeekSchedule v-model:selected-date="selectedDate" />
   <hr />
   <DaySchedule :selected-date="selectedDate" />
 

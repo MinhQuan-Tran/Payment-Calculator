@@ -1,10 +1,11 @@
 <script lang="ts">
-import type { Entry, WorkInfos } from '@/types';
-import { currencyFormat, hourFormat, toTimeStr, getEntries } from '@/utils';
+import { Entry } from '@/classes';
+import { currencyFormat, toTimeStr, getEntries } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
+import DayScheduleEntry from '@/components/DayScheduleEntry.vue';
 import BaseDialog from '@/components/BaseDialog.vue';
 import ClearEntriesForm from '@/components/ClearEntriesForm.vue';
 import EntryForm from '@/components/EntryForm.vue';
@@ -38,20 +39,7 @@ export default {
   },
   methods: {
     currencyFormat,
-    hourFormat,
     toTimeStr,
-
-    hourDiff(entry: Entry) {
-      const fromTime = entry.from.getTime();
-      const toTime = entry.to.getTime();
-      const diff = toTime - fromTime;
-      return diff / 1000 / 60 / 60;
-    },
-
-    entryTotalPay(entry: Entry) {
-      const hours = this.hourDiff(entry);
-      return entry.payRate * hours;
-    },
 
     handleEditEntry(entry: Entry) {
       this.selectedEntry = entry;
@@ -130,6 +118,7 @@ export default {
     isCheckIn() {
       return this.userDataStore.checkInTime !== undefined;
     },
+
     entries() {
       // from 12am on the given day
       const from = new Date(this.selectedDate);
@@ -140,7 +129,9 @@ export default {
       to.setDate(to.getDate() + 1);
       to.setHours(0, 0, 0, 0);
 
-      return getEntries(this.userDataStore.entries, from, to);
+      this.$forceUpdate();
+
+      return getEntries(this.userDataStore.entries as Array<Entry>, from, to);
     }
   },
   mounted() {
@@ -149,90 +140,47 @@ export default {
   updated() {
     this.updateTimeWidth();
   },
-  components: { BaseDialog, ClearEntriesForm, EntryForm }
+  components: { DayScheduleEntry, BaseDialog, ClearEntriesForm, EntryForm }
 };
 </script>
 
 <template>
   <div class="day-schedule">
     <div class="actions">
-      <button @click="($refs.clearEntriesDialog as any).showModal()" class="danger-btn" id="clear-btn">Clear</button>
+      <button @click="($refs.clearEntriesDialog as any).showModal()" class="danger" id="clear-btn">Clear</button>
 
       <Transition>
         <button
           v-if="selectedDate.setHours(0, 0, 0, 0) == new Date().setHours(0, 0, 0, 0)"
           @click="handleCheckInOut"
           id="check-in-out-btn"
-          :class="{ 'warning-btn': isCheckIn }"
+          :class="{ primary: !isCheckIn, warning: isCheckIn }"
         >
           Check {{ isCheckIn ? 'Out' : 'In' }}
         </button>
       </Transition>
 
-      <button @click="handleAddEntry" class="success-btn" id="add-btn">Add Entry</button>
+      <button @click="handleAddEntry" class="success" id="add-btn">Add Entry</button>
     </div>
 
     <div class="entry-list">
-      <!-- TODO: Seperate to Entry component -->
-      <div
+      <DayScheduleEntry
         v-for="entry in entries!.sort((a: Entry, b: Entry) => {
-          if (new Date(a.from) < new Date(b.from)) {
-            return -1;
-          } else {
-            return 1;
-          }
+          // Sort by from time, then by to time
+          return a.from.getTime() - b.from.getTime() || a.to.getTime() - b.to.getTime();
         })"
         :key="entry.id"
-        class="entry"
-        @click="handleEditEntry(entry)"
-      >
-        <div class="datetime">
-          <div class="from">
-            <div
-              class="date"
-              v-if="new Date(entry.from).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
-            >
-              {{
-                entry.from.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric'
-                })
-              }}
-            </div>
-            <div class="time">{{ toTimeStr(entry.from) }}</div>
-          </div>
-          <div class="to">
-            <div
-              class="date"
-              v-if="new Date(entry.to).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
-            >
-              {{
-                entry.to.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric'
-                })
-              }}
-            </div>
-            <div class="time">{{ toTimeStr(entry.to) }}</div>
-          </div>
-        </div>
-        <div class="divider"></div>
-        <div class="info">
-          <div class="workplace">{{ entry.workplace }}</div>
-          <div class="total">{{ currencyFormat(entryTotalPay(entry)) }}</div>
-          <div class="pay-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
-          <div class="hour-diff">
-            {{ hourFormat(hourDiff(entry)) }}
-          </div>
-        </div>
-      </div>
+        :entry="entry"
+        :selected-date="selectedDate"
+        @edit-entry="handleEditEntry"
+      />
     </div>
 
     <BaseDialog
       ref="clearEntriesDialog"
       title="Clear Entries"
       open-dialog-text="Clear"
-      class="danger-btn"
+      class="danger"
       :reset-forms="true"
     >
       <ClearEntriesForm :selected-date="selectedDate" />
@@ -251,105 +199,12 @@ export default {
   align-items: stretch;
 }
 
-.entry-list {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  margin: var(--padding) 0;
-  gap: 0.75em;
-}
-
-.entry-list .entry {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: start;
-  cursor: pointer;
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  --divider-width: 4px;
-  --divider-border-radius: calc(var(--divider-width) / 2);
-}
-
-.divider {
-  align-self: stretch;
-  width: var(--divider-width);
-  border-radius: var(--divider-border-radius);
-  background: var(--primary-color);
-}
-
-.datetime {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1em;
-  align-items: stretch;
-  text-align: right;
-  width: v-bind('datetimeWidth');
-  padding-right: var(--padding);
-  white-space: nowrap;
-}
-
-.datetime .date {
-  font-size: smaller;
-  font-weight: bold;
-  opacity: 0.5;
-}
-
-.info {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'workplace total'
-    'pay-rate hour-diff';
-  gap: var(--padding);
-  justify-items: stretch;
-  justify-content: stretch;
-  align-items: center;
-  align-content: space-between;
-  background-color: var(--input-background-color);
-  padding: var(--padding);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  margin: var(--divider-border-radius) 0;
-}
-.info > * {
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.info > *:nth-child(2n) {
-  text-align: right;
-}
-
-.info .workplace {
-  grid-area: workplace;
-  font-weight: bold;
-}
-
-.info .total {
-  grid-area: total;
-  font-weight: bold;
-}
-
-.info .pay-rate {
-  grid-area: pay-rate;
-}
-
-.info .hour-diff {
-  grid-area: hour-diff;
-}
-
 .actions {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--gap-horizontal);
+  margin-bottom: var(--padding);
 }
 
 .actions > * {
@@ -370,5 +225,21 @@ export default {
 .actions #check-in-out-btn.v-leave-to {
   flex-grow: 0;
   width: 0;
+}
+
+.entry-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: var(--padding) 0;
+  gap: calc(var(--padding) * 2);
+}
+
+.entry-list:has(.info[open]) .entry:not(:has(.info[open]), :hover) {
+  opacity: 0.5;
+}
+
+.entry-list {
+  --datetime-width: v-bind('datetimeWidth');
 }
 </style>

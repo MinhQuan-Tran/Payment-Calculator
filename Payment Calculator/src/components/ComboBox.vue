@@ -18,10 +18,19 @@ export default {
   },
   created() {
     this.$nextTick(() => {
+      // Disable input autocomplete
+      ((this.$refs.slot as HTMLDivElement).querySelector('input') as HTMLInputElement).setAttribute(
+        'autocomplete',
+        'off'
+      );
+
+      // Show the datalist when the input is focused
       ((this.$refs.slot as HTMLDivElement).querySelector('input') as HTMLInputElement).addEventListener('focus', () => {
         (this.$refs.datalist as HTMLDivElement).classList.add('show');
         (this.$refs['input-field'] as HTMLDivElement).style.zIndex = '1';
       });
+
+      // Hide the datalist when the input is blurred
       ((this.$refs.slot as HTMLDivElement).querySelector('input') as HTMLInputElement).addEventListener('blur', () => {
         // Fire the click event after the hide the datalist
         (this.$refs.datalist as HTMLDivElement).classList.remove('show');
@@ -55,7 +64,7 @@ export default {
           @click="$emit('update:value', itemName)"
         >
           {{ itemName }}
-          <button class="delete-btn" v-if="deletable" @click.stop="$emit('delete-item', itemName)">
+          <button class="delete-btn danger" type="button" v-if="deletable" @click.stop="$emit('delete-item', itemName)">
             <div class="icons8-close"></div>
           </button>
         </div>
@@ -131,7 +140,6 @@ export default {
 }
 
 .list .item .delete-btn {
-  --button-color: var(--danger-color);
   font-size: inherit;
   height: 1.5em;
   width: 1.5em;

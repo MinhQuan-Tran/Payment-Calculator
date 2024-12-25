@@ -26,6 +26,7 @@ export default {
   border: none;
   padding: var(--padding-small) 0;
   margin: 0;
+  gap: var(--padding);
 }
 
 .input > * {
