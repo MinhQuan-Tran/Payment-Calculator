@@ -52,6 +52,7 @@ export class Duration {
   }
 
   format(style: string = 'narrow'): string {
+    // @ts-ignore: DurationFormat is not yet supported
     return new Intl.DurationFormat([], {
       style: style,
       hoursDisplay: 'always'
