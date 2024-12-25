@@ -61,7 +61,7 @@ export default {
           this.formData.to!,
           this.formData.unpaidBreaks
             ?.map((ub) => new Duration({ hours: ub.hours, minutes: ub.minutes }))
-            .filter((ub) => ub.hours > 0 && ub.minutes > 0) ?? []
+            .filter((ub) => ub.hours > 0 || ub.minutes > 0) ?? []
         );
       } catch (error) {
         alert('Invalid entry');

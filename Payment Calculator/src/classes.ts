@@ -1,9 +1,17 @@
 export class Duration {
-  private _hours: number = 0;
-  private _minutes: number = 0;
+  private _hours: number | undefined;
+  private _minutes: number | undefined;
 
   constructor(props?: { hours?: number; minutes?: number; from?: Date; to?: Date }) {
     const { hours, minutes, from, to } = props ?? {};
+
+    if (hours !== undefined) {
+      this.hours = hours;
+    }
+
+    if (minutes !== undefined) {
+      this.minutes = minutes;
+    }
 
     if (from !== undefined && to !== undefined) {
       const duration = to.getTime() - from.getTime();
@@ -13,20 +21,22 @@ export class Duration {
 
       return;
     }
-
-    this.hours = hours ?? 0;
-    this.minutes = minutes ?? 0;
   }
 
   get hours(): number {
-    return this._hours;
+    return this._hours ?? 0;
   }
 
   get minutes(): number {
-    return this._minutes;
+    return this._minutes ?? 0;
   }
 
   set hours(hours: number) {
+    if (hours === undefined) {
+      this._hours = undefined;
+      return;
+    }
+
     if (Number(hours) < 0) {
       throw new Error('Hours cannot be negative');
     }
@@ -47,15 +57,20 @@ export class Duration {
       throw new Error('Minutes should be an integer');
     }
 
+    this._hours ??= 0;
     this._hours += Math.floor(Number(minutes) / 60);
     this._minutes = Number(minutes) % 60;
   }
 
-  format(style: string = 'narrow'): string {
+  format(style: string = 'narrow', hoursDisplay: string = 'auto'): string {
+    if (!this._hours && !this._minutes) {
+      hoursDisplay = 'always';
+    }
+
     // @ts-ignore: DurationFormat is not yet supported
     return new Intl.DurationFormat([], {
       style: style,
-      hoursDisplay: 'always'
+      hoursDisplay: hoursDisplay
     }).format(this);
   }
 }

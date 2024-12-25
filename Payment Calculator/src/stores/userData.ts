@@ -9,7 +9,6 @@ export const useUserDataStore = defineStore('userData', {
           .filter((entry: any) => entry !== null)
           .map((entry: any) => {
             try {
-              console.log('Parsing entry:', entry);
               return new Entry(
                 entry.id || entry._id,
                 entry.workplace || entry._workplace,
