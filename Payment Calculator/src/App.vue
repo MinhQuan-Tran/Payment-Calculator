@@ -55,9 +55,9 @@ export default {
     BaseDialog
   },
   mounted() {
-    // Download data from localStorage
+    // // Download data from localStorage
     // Convert localStorage to JSON
-    const localStorageData = JSON.stringify(localStorage);
+    const localStorageData = JSON.stringify(localStorage.getItem('entries'));
 
     // Create a Blob from the data
     const blob = new Blob([localStorageData], { type: 'application/json' });
