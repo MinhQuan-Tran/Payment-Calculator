@@ -91,7 +91,11 @@
   },
   {
     "version": "0.3.5",
-    "date": "",
-    "changes": []
+    "date": "2024-12-25T00:00:00+1100",
+    "changes": [
+      "[Fix] Entry changes before pressing the Edit button",
+      "[Feature] Add unpaid break time",
+      "Improve user interface and experience"
+    ]
   }
 ]

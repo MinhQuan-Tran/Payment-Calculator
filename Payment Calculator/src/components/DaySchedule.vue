@@ -1,19 +1,11 @@
 <script lang="ts">
-import type { Entry } from '@/types';
-import {
-  currencyFormat,
-  hourMinuteFormat,
-  toTimeStr,
-  getEntries,
-  entryDuration,
-  entryBillableTime,
-  entryTotalPay,
-  sumDuration
-} from '@/utils';
+import { Entry } from '@/classes';
+import { currencyFormat, toTimeStr, getEntries } from '@/utils';
 
 import { mapStores } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
 
+import DayScheduleEntry from '@/components/DayScheduleEntry.vue';
 import BaseDialog from '@/components/BaseDialog.vue';
 import ClearEntriesForm from '@/components/ClearEntriesForm.vue';
 import EntryForm from '@/components/EntryForm.vue';
@@ -47,12 +39,7 @@ export default {
   },
   methods: {
     currencyFormat,
-    hourMinuteFormat,
     toTimeStr,
-    entryDuration,
-    entryBillableTime,
-    entryTotalPay,
-    sumDuration,
 
     handleEditEntry(entry: Entry) {
       this.selectedEntry = entry;
@@ -142,11 +129,9 @@ export default {
       to.setDate(to.getDate() + 1);
       to.setHours(0, 0, 0, 0);
 
-      console.log('Updating entries');
-
       this.$forceUpdate();
 
-      return getEntries(this.userDataStore.entries, from, to);
+      return getEntries(this.userDataStore.entries as Array<Entry>, from, to);
     }
   },
   mounted() {
@@ -155,7 +140,7 @@ export default {
   updated() {
     this.updateTimeWidth();
   },
-  components: { BaseDialog, ClearEntriesForm, EntryForm }
+  components: { DayScheduleEntry, BaseDialog, ClearEntriesForm, EntryForm }
 };
 </script>
 
@@ -179,81 +164,16 @@ export default {
     </div>
 
     <div class="entry-list">
-      <!-- TODO: Seperate to Entry component -->
-      <div
+      <DayScheduleEntry
         v-for="entry in entries!.sort((a: Entry, b: Entry) => {
           // Sort by from time, then by to time
           return a.from.getTime() - b.from.getTime() || a.to.getTime() - b.to.getTime();
         })"
         :key="entry.id"
-        class="entry"
-      >
-        <div class="datetime">
-          <div class="from">
-            <div
-              class="date"
-              v-if="new Date(entry.from).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
-            >
-              {{
-                entry.from.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric'
-                })
-              }}
-            </div>
-            <div class="time">{{ toTimeStr(entry.from) }}</div>
-          </div>
-          <div class="to">
-            <div
-              class="date"
-              v-if="new Date(entry.to).setHours(0, 0, 0, 0) !== new Date(selectedDate).setHours(0, 0, 0, 0)"
-            >
-              {{
-                entry.to.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric'
-                })
-              }}
-            </div>
-            <div class="time">{{ toTimeStr(entry.to) }}</div>
-          </div>
-        </div>
-        <div class="divider"></div>
-        <!-- Allow user to open multiple entries to compare -->
-        <details class="info">
-          <summary>
-            <div class="workplace">{{ entry.workplace }}</div>
-            <div class="billable-time">
-              {{ hourMinuteFormat(entryBillableTime(entry), 'short') }}
-              <img
-                width="48"
-                height="48"
-                src="https://img.icons8.com/fluency/48/time-card.png"
-                alt="time-card"
-                class="inline-icon"
-              />
-            </div>
-            <div class="earning">{{ currencyFormat(entryTotalPay(entry)) }}</div>
-            <div class="unpaid-breaks">
-              {{ hourMinuteFormat(sumDuration(entry.unpaidBreaks), 'short') }}
-              <img
-                width="48"
-                height="48"
-                src="https://img.icons8.com/fluency/48/tea.png"
-                alt="tea"
-                class="inline-icon"
-              />
-            </div>
-          </summary>
-          <div class="details">
-            <!-- TODO: Add Hourly Rate, Shift Duration (Before Breaks), Notes or Description -->
-            <div class="secondary-info">
-              <div class="hourly-rate">{{ currencyFormat(entry.payRate) }}/hr</div>
-            </div>
-            <!-- TODO: Add actions Edit, Delete -->
-          </div>
-        </details>
-      </div>
+        :entry="entry"
+        :selected-date="selectedDate"
+        @edit-entry="handleEditEntry"
+      />
     </div>
 
     <BaseDialog
@@ -315,136 +235,11 @@ export default {
   gap: calc(var(--padding) * 2);
 }
 
-.entry-list .entry {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  justify-content: start;
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  --divider-width: 4px;
-  /* --divider-border-radius: calc(var(--divider-width) / 2); */
-  border-radius: var(--border-radius);
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.5);
-  transition: all 0.3s;
-}
-
-.entry-list .entry:hover,
-.entry-list .entry:has(.info[open]) {
-  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.8);
-}
-
-.entry-list:has(.info[open]) .entry:not(:has(.info[open])) {
+.entry-list:has(.info[open]) .entry:not(:has(.info[open]), :hover) {
   opacity: 0.5;
 }
 
-.divider {
-  align-self: stretch;
-  width: var(--divider-width);
-  /* border-radius: var(--divider-border-radius); */
-  background: var(--primary-color);
-}
-
-.datetime {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: stretch;
-  text-align: right;
-  gap: 1em;
-  width: v-bind('datetimeWidth');
-  padding: var(--padding-small) var(--padding);
-  border-radius: var(--border-radius) 0 0 var(--border-radius);
-  white-space: nowrap;
-  background-color: var(--input-background-color);
-}
-
-.datetime .date {
-  font-size: smaller;
-  font-weight: bold;
-  opacity: 0.5;
-}
-
-.info {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  flex: 1;
-  background: light-dark(#d8d8d8, #343434);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  padding: 0;
-  transition: all 0.3s;
-}
-
-.info summary::marker,
-.info summary::-webkit-details-marker {
-  display: none !important;
-}
-
-.info summary {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'workplace billable-time'
-    'earning   unpaid-breaks';
-  gap: var(--padding);
-  justify-items: stretch;
-  justify-content: stretch;
-  align-items: center;
-  align-content: space-between;
-  background-color: var(--input-background-color);
-  padding: var(--padding);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  position: relative;
-  cursor: pointer;
-}
-
-.info summary > * {
-  text-wrap: balance;
-  text-wrap: pretty;
-  word-break: break-word;
-  overflow-wrap: break-word;
-}
-
-.info summary > *:nth-child(2n) {
-  text-align: right;
-}
-
-.info summary .workplace {
-  grid-area: workplace;
-  font-weight: bold;
-}
-
-.info summary .earning {
-  grid-area: earning;
-}
-
-.info summary .billable-time {
-  grid-area: billable-time;
-}
-
-.info summary .unpaid-breaks {
-  grid-area: unpaid-breaks;
-}
-
-.info[open] summary {
-  transition: all 0.3s;
-  flex-grow: 1;
-}
-
-.details {
-  display: grid;
-  padding: var(--padding);
-  border-radius: 0 0 var(--border-radius) 0;
-  transform: scaleY(0);
-  transform-origin: top;
-  transition: transform 0.26s ease;
-}
-
-.info[open] .details {
-  transform: scaleY(1);
+.entry-list {
+  --datetime-width: v-bind('datetimeWidth');
 }
 </style>

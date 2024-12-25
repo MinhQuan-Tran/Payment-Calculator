@@ -108,6 +108,11 @@ button:hover {
   --text-color: var(--text-color-black) !important;
 }
 
+button.danger {
+  flex-grow: 0;
+  flex-shrink: 1;
+}
+
 .icons8-close {
   display: inline-block;
   width: 1em;

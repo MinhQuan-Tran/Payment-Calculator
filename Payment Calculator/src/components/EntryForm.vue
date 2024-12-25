@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { Entry, Duration } from '@/types';
-import { entryDuration, deepClone } from '@/utils';
+import { Entry, Duration } from '@/classes';
+import { deepClone } from '@/utils';
 
 import { mapWritableState } from 'pinia';
 import { useUserDataStore } from '@/stores/userData';
@@ -27,18 +27,7 @@ export default {
     };
   },
   computed: {
-    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos']),
-
-    // Work hours remaining after unpaid breaks
-    workHoursRemain(): number {
-      if (!this.formData.from || !this.formData.to) {
-        return 0;
-      }
-
-      const formData = deepClone<Partial<Entry>>(this.formData) as Pick<Entry, 'from' | 'to' | 'unpaidBreaks'>;
-
-      return entryDuration(formData)?.hours - (formData.unpaidBreaks?.reduce((acc, curr) => acc + curr.hours, 0) || 0);
-    }
+    ...mapWritableState(useUserDataStore, ['entries', 'checkInTime', 'prevWorkInfos'])
   },
   emits: {
     entryChange(payload: { action: string; entry: Entry }) {
@@ -55,49 +44,52 @@ export default {
     entryAction(event: Event) {
       const form = event.currentTarget as HTMLFormElement;
 
-      let action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
+      const action = ((event as SubmitEvent)?.submitter as HTMLButtonElement).value;
+
+      let entry: Entry;
+
+      try {
+        entry = new Entry(
+          action === 'edit' ? this.formData.id! : 0,
+          this.formData.workplace!,
+          this.formData.payRate!,
+          this.formData.from!,
+          this.formData.to!,
+          this.formData.unpaidBreaks?.map((ub) => new Duration({ hours: ub.hours, minutes: ub.minutes })) ?? []
+        );
+      } catch (error) {
+        alert('Invalid entry');
+        console.log(this.formData);
+        throw new Error('Invalid entry' + error);
+      }
 
       switch (action) {
         case 'add':
         case 'check in':
-          // TODO: Check formDate valid before saving (Number, Date, 'from' cannot be later than 'to')
-          try {
-            const entry = { ...this.formData, id: this.entries.length + 1 } as Entry;
+          entry.id = this.entries.length + 1;
 
-            this.entries.push(entry);
+          this.entries.push(entry);
 
-            if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
-              this.prevWorkInfos[entry.workplace].payRate.add(Number(entry.payRate));
-            } else {
-              this.prevWorkInfos[entry.workplace] = {
-                payRate: new Set<number>([Number(entry.payRate)])
-              };
-            }
+          if (entry.workplace in this.prevWorkInfos && this.prevWorkInfos[entry.workplace].payRate instanceof Set) {
+            this.prevWorkInfos[entry.workplace].payRate.add(Number(entry.payRate));
+          } else {
+            this.prevWorkInfos[entry.workplace] = {
+              payRate: new Set<number>([Number(entry.payRate)])
+            };
+          }
 
-            if (action === 'check in') {
-              this.checkInTime = undefined;
-            }
-          } catch (error) {
-            alert('Invalid entry');
-            throw new Error('Invalid entry');
+          if (action === 'check in') {
+            this.checkInTime = undefined;
           }
 
           break;
 
         case 'edit':
-          try {
-            const entry = this.formData as Entry;
-
-            this.entries.splice(
-              this.entries.findIndex((e) => e.id === entry.id),
-              1,
-              entry
-            );
-          } catch (error) {
-            alert('Invalid entry');
-            throw new Error('Invalid entry');
-          }
-
+          this.entries.splice(
+            this.entries.findIndex((e) => e.id === entry.id),
+            1,
+            entry
+          );
           break;
 
         case 'delete':
@@ -170,7 +162,7 @@ export default {
 
 <template>
   <form @submit.prevent="entryAction" @reset.prevent="resetForm">
-    <input type="hidden" name="id" v-if="formData?.id" v-model="formData.id" />
+    <input type="hidden" name="id" v-model="formData.id" />
 
     <InputLabel label="Workplace">
       <ComboBox
@@ -184,7 +176,7 @@ export default {
           type="text"
           id="workplace"
           name="workplace"
-          placeholder="e.g. RestaurantName"
+          placeholder="e.g. Restaurant Name"
           v-model="formData.workplace"
           required
         />
@@ -259,7 +251,7 @@ export default {
                 : alert('Invalid input: Please enter a valid number.');
             }
           "
-          :list="[...Array(workHoursRemain + 1).keys()].map(String)"
+          :list="[...Array((formData.billableDuration?.hours ?? 0) + 1).keys()].map(String)"
         >
           <input
             type="number"
@@ -295,11 +287,13 @@ export default {
           />
         </ComboBox>
 
-        <!-- Delete button -->
+        <!-- Delete unpaid break -->
         <button class="delete-btn danger" type="button" @click="formData.unpaidBreaks?.splice(index, 1)">
           <div class="icons8-close"></div>
         </button>
       </div>
+
+      <!-- Add unpaid break -->
       <button type="button" @click="(formData.unpaidBreaks ??= [] as Duration[]).push({} as Duration)">+</button>
     </InputLabel>
 

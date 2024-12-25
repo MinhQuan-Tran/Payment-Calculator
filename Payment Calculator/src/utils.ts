@@ -1,4 +1,4 @@
-import type { Duration, Entry } from '@/types';
+import type { Duration, Entry } from '@/classes';
 
 export function currencyFormat(value: number): string {
   return Intl.NumberFormat([], {
@@ -7,56 +7,13 @@ export function currencyFormat(value: number): string {
   }).format(value);
 }
 
-export function hourMinuteFormat(time: Duration, style: string = 'narrow'): string {
-  return new Intl.DurationFormat([], {
-    style: style,
-    hoursDisplay: 'always'
-  }).format(time);
-}
-
 export function toTimeStr(date: Date): string {
   return new Date(date).toLocaleTimeString([], {
     timeStyle: 'short'
   });
 }
 
-// Entry duration (including breaks)
-export function entryDuration(entry: Pick<Entry, 'from' | 'to'>, fromLimit?: Date, toLimit?: Date): Duration {
-  // If the entry is outside the limits, use the limits instead
-  const fromDate = fromLimit && entry.from < fromLimit ? fromLimit : new Date(entry.from);
-  const toDate = toLimit && entry.to > toLimit ? toLimit : new Date(entry.to);
-
-  const workTime = toDate.getTime() - fromDate.getTime();
-
-  const workHours = Math.floor(workTime / (1000 * 60 * 60));
-  const workMinutes = Math.floor((workTime % (1000 * 60 * 60)) / (1000 * 60));
-
-  return { hours: workHours, minutes: workMinutes } as Duration;
-}
-
-// Work duration (excluding breaks)
-export function entryBillableTime(
-  entry: Pick<Entry, 'from' | 'to' | 'unpaidBreaks'>,
-  fromLimit?: Date,
-  toLimit?: Date
-): Duration {
-  const entryTime = entryDuration(entry, fromLimit, toLimit);
-  const breakTime = sumDuration(entry.unpaidBreaks);
-
-  const billableTimeInMinutes = entryTime.hours * 60 + entryTime.minutes - (breakTime.hours * 60 + breakTime.minutes);
-
-  return {
-    hours: Math.floor(billableTimeInMinutes / 60),
-    minutes: billableTimeInMinutes % 60
-  };
-}
-
-export function entryTotalPay(entry: Entry) {
-  const hours = entryBillableTime(entry).hours + entryBillableTime(entry).minutes / 60;
-  return entry.payRate * hours;
-}
-
-export function getEntries(entries: Entry[], from: Date, to: Date): Entry[] {
+export function getEntries(entries: Array<Entry>, from: Date, to: Date): Entry[] {
   // Filter entries for the given date
   return entries.filter((entry) => {
     // Including the ones with 'from' in the past and 'to' in the future
@@ -67,18 +24,6 @@ export function getEntries(entries: Entry[], from: Date, to: Date): Entry[] {
       new Date(entry.to) > from
     );
   });
-}
-
-export function sumDuration(durations: Duration[]): Duration {
-  const totalMinutes =
-    durations?.reduce((acc, duration) => {
-      return acc + duration.hours * 60 + duration.minutes;
-    }, 0) ?? 0;
-
-  return {
-    hours: Math.floor(totalMinutes / 60),
-    minutes: totalMinutes % 60
-  };
 }
 
 export function deepClone<T>(obj: T, hash = new WeakMap()): T {

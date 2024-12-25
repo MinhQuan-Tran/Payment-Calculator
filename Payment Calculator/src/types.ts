@@ -1,16 +1,4 @@
-export type Duration = {
-  hours: number;
-  minutes: number;
-};
-
-export type Entry = {
-  id: number;
-  workplace: string;
-  payRate: number;
-  from: Date;
-  to: Date;
-  unpaidBreaks: Duration[];
-};
+import { Duration } from '@/classes';
 
 export type WorkInfos = {
   [workplace: string]: {

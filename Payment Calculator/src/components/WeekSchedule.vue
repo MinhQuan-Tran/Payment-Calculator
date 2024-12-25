@@ -1,13 +1,13 @@
 <script lang="ts">
-import type { Entry, Week, Day, Duration } from '@/types';
-import { currencyFormat, hourMinuteFormat, entryBillableTime, getEntries } from '@/utils';
+import { Entry, Duration } from '@/classes';
+import type { Week, Day } from '@/types';
+import { currencyFormat, getEntries } from '@/utils';
+
+import { mapStores } from 'pinia';
+import { useUserDataStore } from '@/stores/userData';
 
 export default {
   props: {
-    entries: {
-      type: Array as () => Entry[],
-      required: true
-    },
     selectedDate: {
       type: Date,
       required: true
@@ -27,6 +27,7 @@ export default {
     };
   },
   computed: {
+    ...mapStores(useUserDataStore),
     calendar() {
       const changedDate = new Date(this.today);
       changedDate.setMonth(changedDate.getMonth() + this.monthChange);
@@ -66,21 +67,17 @@ export default {
         to.setDate(to.getDate() + 7);
         to.setHours(0, 0, 0, 0);
 
-        const entries = getEntries(this.entries, from, to);
+        const entries = getEntries(this.userDataStore.entries as Array<Entry>, from, to);
 
-        week.summaries.income += entries.reduce(
-          (acc, entry) =>
-            (acc += (entryBillableTime(entry).hours + entryBillableTime(entry).minutes / 60) * entry.payRate),
-          0
-        );
+        week.summaries.income += entries.reduce((acc, entry) => (acc += entry.income), 0);
 
         week.summaries.totalHours = entries.reduce(
           (acc, entry) => {
-            acc.hours += entryBillableTime(entry).hours;
-            acc.minutes += entryBillableTime(entry).minutes;
+            acc.hours += entry.duration.hours;
+            acc.minutes += entry.duration.minutes;
             return acc;
           },
-          { hours: 0, minutes: 0 } as Duration
+          new Duration({ hours: 0, minutes: 0 })
         );
 
         // Create the days of the week
@@ -113,7 +110,6 @@ export default {
   },
   methods: {
     currencyFormat,
-    entryBillableTime,
     getEntries,
 
     updateTitleByMonth() {
@@ -137,7 +133,7 @@ export default {
         case 'income':
           return currencyFormat(week.summaries.income);
         case 'totalHours':
-          return hourMinuteFormat(week.summaries.totalHours);
+          return week.summaries.totalHours.format();
         default:
           return '';
       }
@@ -186,13 +182,18 @@ export default {
               {
                 // Compare the dates only
                 selected: selectedDate && selectedDate.getTime() === day.dayStartTime.getTime(),
-                'has-entry': getEntries(entries, day.dayStartTime, day.dayEndTime).length > 0,
-                'has-entry-past': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
-                  (entry) => new Date(entry.from) < day.dayStartTime
-                ),
-                'has-entry-future': getEntries(entries, day.dayStartTime, day.dayEndTime).some(
-                  (entry) => day.dayEndTime < new Date(entry.to)
-                )
+                'has-entry':
+                  getEntries(userDataStore.entries as Array<Entry>, day.dayStartTime, day.dayEndTime).length > 0,
+                'has-entry-past': getEntries(
+                  userDataStore.entries as Array<Entry>,
+                  day.dayStartTime,
+                  day.dayEndTime
+                ).some((entry) => new Date(entry.from) < day.dayStartTime),
+                'has-entry-future': getEntries(
+                  userDataStore.entries as Array<Entry>,
+                  day.dayStartTime,
+                  day.dayEndTime
+                ).some((entry) => day.dayEndTime < new Date(entry.to))
               }
             ]"
           >
