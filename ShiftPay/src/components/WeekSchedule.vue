@@ -26,7 +26,7 @@ export default {
 
     return {
       STATUS,
-      weekDays: ['M.', 'Tu.', 'W.', 'Th.', 'F', 'Sa.', 'Su.'],
+      weekDays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
       today,
       monthChange: 0,
       slideDirection: 1 as 1 | -1,

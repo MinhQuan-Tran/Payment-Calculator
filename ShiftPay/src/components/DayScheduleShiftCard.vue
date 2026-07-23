@@ -94,7 +94,7 @@ export default {
         </div>
 
         <div class="actions">
-          <button @click="handleEditShift(shift)">Edit</button>
+          <button class="edit-btn" @click="handleEditShift(shift)">Edit</button>
         </div>
       </div>
     </details>

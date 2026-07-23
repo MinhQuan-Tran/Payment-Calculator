@@ -8,7 +8,7 @@ export default {
     showLegends: {
       type: Boolean,
       required: true
-    }
+    },
   },
 
   emits: ['login', 'import', 'tutorial', 'changelog', 'toggle-legends'],

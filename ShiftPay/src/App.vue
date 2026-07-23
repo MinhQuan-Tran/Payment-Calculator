@@ -35,8 +35,15 @@ export default {
   methods: {
     handleClickOutside(event: MouseEvent) {
       if (!this.menuOpened) return;
+
+      // Disable during tutorial to prevent closing menu when clicking on overlay
+      const tutorial = this.$refs.tutorial as { active?: boolean; } | undefined;
+      if (tutorial?.active) return;
+
       const menuBtn = this.$refs['menu-btn'] as HTMLDivElement;
       const menu = this.$refs.mainMenu && (this.$refs.mainMenu as any).$el;
+
+      // Check if the click is outside the menu and menu button
       if (
         menu &&
         !menu.contains(event.target as Node) &&
@@ -50,14 +57,17 @@ export default {
       console.log('Showing sync dialog');
       (this.$refs['sync-dialog'] as any).showModal();
     },
+
     showImportDialog() {
       this.menuOpened = false;
       (this.$refs['import-dialog'] as any).showModal();
     },
+
     showChangelogDialog() {
       this.menuOpened = false;
       (this.$refs['changelog-dialog'] as any).showFullHistory();
     },
+
     handleSyncComplete() {
       // Clear the pending flag so stores fetch from server
       localStorage.removeItem('syncPending');
@@ -65,6 +75,7 @@ export default {
       this.workInfosStore.fetch();
       this.shiftTemplatesStore.fetch();
     },
+
     startTutorial() {
       this.menuOpened = false;
       (this.$refs.tutorial as any).start();
@@ -76,10 +87,9 @@ export default {
     },
 
     async handleLogin() {
-      // Close the menu first
-      this.menuOpened = false;
-
       await this.authStore.login();
+
+      this.menuOpened = false;
 
       // Set stores to loading state while we check for data and potentially sync
       this.shiftsStore.status = STATUS.Loading;
@@ -172,7 +182,7 @@ export default {
       <img src="/logo.png" alt="ShiftPay logo" class="logo" />
       <h1 class="app-title">ShiftPay</h1>
     </div>
-    <div ref="menu-btn" class="menu-btn" @click="menuOpened = !menuOpened" :class="{ open: menuOpened }">
+    <div ref="menu-btn" @click="menuOpened = !menuOpened" :class="{ 'menu-btn': true, 'open': menuOpened }">
       <div class="bar"></div>
       <div class="bar"></div>
       <div class="bar"></div>
