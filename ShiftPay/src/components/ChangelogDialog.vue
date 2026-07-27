@@ -55,17 +55,13 @@ export default {
   },
 
   methods: {
-    openDialog(showFullHistory = false, markVersionSeenOnClose = false) {
+    showModal(showFullHistory = false, markVersionSeenOnClose = false) {
       this.showingFullHistory = showFullHistory;
       this.shouldMarkVersionSeenOnClose = markVersionSeenOnClose;
       (this.$refs.dialog as HTMLDialogElement).showModal();
     },
 
-    showFullHistory() {
-      this.openDialog(true, false);
-    },
-
-    handleClose() {
+    close() {
       if (this.shouldMarkVersionSeenOnClose) {
         // Mark current version as seen only for update-triggered dialog opens.
         localStorage.setItem('appVersion', this.currentAppVersion);
@@ -80,7 +76,7 @@ export default {
     checkAndShow(): boolean {
       const storedVersion = localStorage.getItem('appVersion');
       if (storedVersion !== this.currentAppVersion) {
-        this.openDialog(false, true);
+        this.showModal(false, true);
         return true;
       }
       return false;
@@ -90,7 +86,7 @@ export default {
 </script>
 
 <template>
-  <BaseDialog ref="dialog" title="What's new" @close-dialog="handleClose">
+  <BaseDialog ref="dialog" title="What's new" @close="close">
     <div class="changelog-content">
       <div v-if="hasDisplayedChanges">
         <div v-for="log in displayedChanges" :key="log.version" class="changelog-entry">

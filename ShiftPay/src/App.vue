@@ -41,12 +41,12 @@ export default {
       if (tutorial?.active) return;
 
       const menuBtn = this.$refs['menu-btn'] as HTMLDivElement;
-      const menu = this.$refs.mainMenu as HTMLElement;
+      const menuElements = (this.$refs.mainMenu as { $el: HTMLElement; }).$el;
 
       // Check if the click is outside the menu and menu button
       if (
-        menu &&
-        !menu.contains(event.target as Node) &&
+        menuElements &&
+        !menuElements.contains(event.target as Node) &&
         !menuBtn.contains(event.target as Node)
       ) {
         this.menuOpened = false;
@@ -55,17 +55,17 @@ export default {
 
     showSyncDialog() {
       console.log('Showing sync dialog');
-      (this.$refs['sync-dialog'] as { showModal: () => void; }).showModal();
+      (this.$refs['sync-dialog'] as HTMLDialogElement).showModal();
     },
 
     showImportDialog() {
       this.menuOpened = false;
-      (this.$refs['import-dialog'] as { showModal: () => void; }).showModal();
+      (this.$refs['import-dialog'] as HTMLDialogElement).showModal();
     },
 
     showChangelogDialog() {
       this.menuOpened = false;
-      (this.$refs['changelog-dialog'] as { showFullHistory: () => void; }).showFullHistory();
+      (this.$refs['changelog-dialog'] as { showModal: (showFullHistory: boolean, markVersionSeenOnClose: boolean) => void; }).showModal(true, false);
     },
 
     handleSyncComplete() {

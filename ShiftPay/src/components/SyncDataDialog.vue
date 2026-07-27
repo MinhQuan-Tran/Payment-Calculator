@@ -49,7 +49,7 @@ export default {
       (this.$refs.dialog as HTMLDialogElement).showModal();
     },
 
-    closeDialog() {
+    close() {
       (this.$refs.dialog as HTMLDialogElement).close();
     },
 
@@ -90,7 +90,7 @@ export default {
         localStorage.removeItem('syncPending');
 
         this.$emit('complete');
-        this.closeDialog();
+        this.close();
       } catch (error) {
         console.error('Error uploading local data:', error);
         this.error = (error as { message?: string; }).message || 'Failed to upload data. Please try again.';
@@ -107,12 +107,12 @@ export default {
       localStorage.removeItem('syncPending');
       // Emit complete to trigger fresh fetch from server (which will be empty)
       this.$emit('complete');
-      this.closeDialog();
+      this.close();
     },
 
     decideLater() {
       // Close dialog without syncing - user can decide later
-      this.closeDialog();
+      this.close();
     }
   }
 };

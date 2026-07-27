@@ -75,6 +75,14 @@ export default {
   },
 
   methods: {
+    showModal() {
+      (this.$refs.baseDialog as HTMLDialogElement).showModal();
+    },
+
+    close() {
+      (this.$refs.baseDialog as HTMLDialogElement).close();
+    },
+
     setRepeatPreset(preset: 'none' | '1d' | '1w' | '1m' | 'custom') {
       // Set repeat fields for radio buttons
       const dayInput = this.$refs['repeat-day'] as HTMLInputElement | undefined;

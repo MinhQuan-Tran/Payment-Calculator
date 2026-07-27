@@ -95,6 +95,14 @@ export default {
   },
 
   methods: {
+    showModal() {
+      (this.$refs.dialog as HTMLDialogElement).showModal();
+    },
+
+    close() {
+      (this.$refs.dialog as HTMLDialogElement).close();
+    },
+
     reset() {
       this.step = 'select';
       this.isDragging = false;
@@ -130,11 +138,6 @@ export default {
 
     triggerFileInput() {
       (this.$refs.fileInput as HTMLInputElement).click();
-    },
-
-    closeDialog() {
-      const dialog = this.$refs.dialog as { closeDialog: () => void; } | undefined;
-      dialog?.closeDialog();
     },
 
     async processFile(file: File) {
@@ -397,7 +400,7 @@ export default {
           <p>Import complete!</p>
         </div>
         <div class="actions">
-          <button class="btn-primary" @click="closeDialog">Done</button>
+          <button class="btn-primary" @click="close">Done</button>
         </div>
       </template>
 
@@ -409,7 +412,7 @@ export default {
         </div>
         <div class="actions">
           <button class="btn-secondary" @click="goBack">Try Again</button>
-          <button class="btn-tertiary" @click="closeDialog">Cancel</button>
+          <button class="btn-tertiary" @click="close">Cancel</button>
         </div>
       </template>
     </div>

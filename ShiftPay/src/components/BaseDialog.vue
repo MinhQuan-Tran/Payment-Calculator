@@ -11,14 +11,13 @@ export default {
     }
   },
   // Emitting events allows parent components to access methods in this component
-  emits: ['showModal', 'closeDialog'],
+  emits: ['showModal', 'close'],
   methods: {
     showModal() {
-      const dialog = this.$refs.dialog as HTMLDialogElement;
-      dialog.showModal();
+      (this.$refs.dialog as HTMLDialogElement).showModal();
     },
 
-    closeDialog() {
+    close() {
       const dialog = this.$refs.dialog as HTMLDialogElement;
       if (this.resetForms) {
         this.$el.querySelectorAll('form').forEach((form: HTMLFormElement) => {
@@ -26,7 +25,7 @@ export default {
         });
       }
       dialog.close();
-      this.$emit('closeDialog');
+      this.$emit('close');
     }
   },
   mounted() {
@@ -42,7 +41,7 @@ export default {
     <div class="dialog">
       <div class="header">
         <b class="title">{{ title }}</b>
-        <button class="close-btn" @click="closeDialog">
+        <button class="close-btn" @click="close">
           <div class="icons8-close"></div>
         </button>
       </div>
