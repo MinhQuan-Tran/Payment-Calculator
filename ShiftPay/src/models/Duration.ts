@@ -20,7 +20,7 @@ export default class Duration {
     if (typeof props === 'string') {
       const parts = props.split(':').map((part) => part.trim());
 
-      const [hours, minutes, _] = parts.map((part) => parseInt(part, 10));
+      const [hours, minutes] = parts.map((part) => parseInt(part, 10));
       if (isNaN(hours) || isNaN(minutes)) {
         throw new Error('Invalid duration string format. Hours and minutes must be numbers.');
       }
@@ -118,7 +118,7 @@ export default class Duration {
       hoursDisplay = 'always';
     }
 
-    // @ts-ignore: DurationFormat is not yet supported
+    // @ts-expect-error -- DurationFormat is not yet supported
     return new Intl.DurationFormat([], {
       style: style,
       hoursDisplay: hoursDisplay

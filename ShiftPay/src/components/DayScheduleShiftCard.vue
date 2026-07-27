@@ -1,8 +1,6 @@
 <script lang="ts">
 import Shift from '@/models/Shift';
 
-import ButtonConfirm from '@/components/ButtonConfirm.vue';
-
 import { currencyFormat, toTimeStr } from '@/utils';
 
 export default {
@@ -18,10 +16,6 @@ export default {
   },
 
   emits: ['edit-shift'],
-
-  components: {
-    ButtonConfirm
-  },
 
   methods: {
     currencyFormat,
@@ -94,7 +88,7 @@ export default {
         </div>
 
         <div class="actions">
-          <button @click="handleEditShift(shift)">Edit</button>
+          <button class="edit-btn" @click="handleEditShift(shift)">Edit</button>
         </div>
       </div>
     </details>

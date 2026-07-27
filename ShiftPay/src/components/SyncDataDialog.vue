@@ -46,11 +46,11 @@ export default {
 
   methods: {
     showModal() {
-      (this.$refs.dialog as any).showModal();
+      (this.$refs.dialog as HTMLDialogElement).showModal();
     },
 
-    closeDialog() {
-      (this.$refs.dialog as any).closeDialog();
+    close() {
+      (this.$refs.dialog as HTMLDialogElement).close();
     },
 
     async uploadLocalData() {
@@ -68,7 +68,7 @@ export default {
         }
 
         // Upload work infos
-        const workInfoPromises: Promise<any>[] = [];
+        const workInfoPromises: Promise<unknown>[] = [];
         this.workInfosStore.workInfos.forEach((info, workplace) => {
           if (info.payRates.size > 0) {
             workInfoPromises.push(
@@ -79,7 +79,7 @@ export default {
         await Promise.all(workInfoPromises);
 
         // Upload shift templates
-        const templatePromises: Promise<any>[] = [];
+        const templatePromises: Promise<unknown>[] = [];
         this.shiftTemplatesStore.templates.forEach((template, name) => {
           templatePromises.push(
             api.shiftTemplates.createOrUpdate(name, template.shift as Shift, template.id)
@@ -90,10 +90,10 @@ export default {
         localStorage.removeItem('syncPending');
 
         this.$emit('complete');
-        this.closeDialog();
-      } catch (err: any) {
-        console.error('Error uploading local data:', err);
-        this.error = err.message || 'Failed to upload data. Please try again.';
+        this.close();
+      } catch (error) {
+        console.error('Error uploading local data:', error);
+        this.error = (error as { message?: string; }).message || 'Failed to upload data. Please try again.';
       } finally {
         this.isProcessing = false;
         this.shiftsStore.status = STATUS.Ready;
@@ -107,12 +107,12 @@ export default {
       localStorage.removeItem('syncPending');
       // Emit complete to trigger fresh fetch from server (which will be empty)
       this.$emit('complete');
-      this.closeDialog();
+      this.close();
     },
 
     decideLater() {
       // Close dialog without syncing - user can decide later
-      this.closeDialog();
+      this.close();
     }
   }
 };

@@ -14,7 +14,7 @@ type QueryParams = Record<string, string | number | boolean>;
 
 interface RequestOptions {
   method: HttpMethod;
-  body?: any;
+  body?: Record<string, unknown> | unknown[];
   queryParams?: QueryParams;
 }
 
@@ -81,11 +81,11 @@ async function createRequest(resource: ApiResource, options: RequestOptions) {
     // Parse JSON response if applicable
     const contentType = res.headers.get('Content-Type');
     return contentType?.includes('application/json') ? await res.json() : null;
-  } catch (err) {
-    if (err instanceof TypeError) {
-      throw new Error('Network error: Please check your internet connection');
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Network error: Please check your internet connection', { cause: error });
     }
-    throw err instanceof Error ? err : new Error('API request failed: ' + String(err));
+    throw new Error(`API request failed`, { cause: error });
   } finally {
     if (isWriteOperation) pendingWriteCount--;
   }

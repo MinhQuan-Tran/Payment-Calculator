@@ -141,8 +141,10 @@ export const useShiftsStore = defineStore('shifts', {
         rawItems.forEach((item, index) => {
           try {
             validatedShifts.push(Shift.parse(item));
-          } catch (error: any) {
-            invalidErrors.push(`Item #${index} is invalid: ${error?.message ?? String(error)}`);
+          } catch (error) {
+            invalidErrors.push(
+              `Item #${index} is invalid: ${error && (error as { message: string }).message ? (error as { message: string }).message : String(error)}`
+            );
           }
         });
 
@@ -183,8 +185,8 @@ export const useShiftsStore = defineStore('shifts', {
         // Validate
         try {
           shiftToUpdate = Shift.parse(shiftToUpdate);
-        } catch (error: any) {
-          throw new Error('Invalid shift input: ' + (error && error.message ? error.message : String(error)));
+        } catch (error) {
+          throw new Error('Could not update shift - Validation failed', { cause: error });
         }
 
         // If not authenticated, just save locally (only if it exists)

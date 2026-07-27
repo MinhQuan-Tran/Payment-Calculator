@@ -1,4 +1,7 @@
 <script lang="ts">
+import { useShiftsStore } from '@/stores/shiftsStore';
+import Shift from '@/models/Shift';
+import Duration from '@/models/Duration';
 export interface TutorialStep {
   /** CSS selector for the target element to spotlight (null = full-screen overlay only) */
   target: string | null;
@@ -6,18 +9,13 @@ export interface TutorialStep {
   message: string;
   /** Sub-text shown below the message */
   subText?: string;
-  /** Step type: 'info' = manual advance only, 'interactive' = waits for user interaction, 'closing' = always shown even after skip */
-  type: 'info' | 'interactive' | 'closing';
-  /** For interactive steps: the event to listen for on the target that auto-advances */
-  waitForEvent?: string;
-  /** For interactive steps: whether to just advance on the event (true) or require a "Next" button (false) */
-  autoAdvance?: boolean;
   /** Tooltip position preference */
   position?: 'top' | 'bottom' | 'left' | 'right' | 'center';
-  /** Whether this step targets an element inside a <dialog> */
-  inDialog?: boolean;
   /** Whether to advance once the target input has a non-empty value (handles programmatic fills like ComboBox selection) */
   waitForFill?: boolean;
+  /** Whether this step targets an element inside the main menu (which may be closed) */
+  /** Cannot be selected if the main menu is closed */
+  inMainMenu?: boolean;
 }
 
 const STEPS: TutorialStep[] = [
@@ -26,7 +24,6 @@ const STEPS: TutorialStep[] = [
     target: null,
     message: 'Welcome to ShiftPay! 👋',
     subText: "<b>ShiftPay</b> is a simple shift-tracking app that helps you log your work hours, calculate earnings, and keep everything organised.",
-    type: 'info',
     position: 'center'
   },
   // Step 1: Calendar
@@ -34,148 +31,109 @@ const STEPS: TutorialStep[] = [
     target: '#week-schedule',
     message: 'This is your calendar',
     subText: 'Days with shifts are highlighted. The column on the right shows your earnings and hours.',
-    type: 'info',
     position: 'bottom'
   },
-  // Step 2: Add Shift button
+  // Step 2: Add Shift button (info-only)
   {
     target: '#add-btn',
     message: 'Add your first shift',
     subText: 'Select here to open the shift form.',
-    type: 'interactive',
-    waitForEvent: 'click',
-    autoAdvance: true,
     position: 'top'
   },
-  // Step 3: Workplace field (inside dialog)
+  // Step 3: Job details (inside dialog)
   {
-    target: '#workplace',
-    message: 'Enter your workplace',
-    subText: 'Type the name of the company or place you work at.',
-    type: 'interactive',
-    waitForFill: true,
-    autoAdvance: true,
-    position: 'top',
-    inDialog: true
+    target: '#job-details',
+    message: 'Job details',
+    subText: 'Enter your workplace and pay rate here.',
+    position: 'top'
   },
-  // Step 4: Pay rate field (inside dialog)
+  // Step 4: Start/End time (inside dialog)
   {
-    target: '#pay-rate',
-    message: 'Enter your hourly pay rate',
-    subText: 'How much do you earn per hour?',
-    type: 'interactive',
-    waitForFill: true,
-    autoAdvance: true,
-    position: 'top',
-    inDialog: true
-  },
-  // Step 5: Start/End time (inside dialog)
-  {
-    target: '.time-row',
+    target: '#schedule',
     message: 'Set your shift times',
     subText: 'Adjust the start and end time for your shift.',
-    type: 'info',
     position: 'top',
-    inDialog: true
   },
-  // Step 6: Submit button (inside dialog)
+  // Step 5: Submit button (info-only)
   {
     target: '#add-shift-btn',
     message: 'Save your shift',
     subText: 'Add other information and select the button to add your shift.',
-    type: 'interactive',
-    waitForEvent: 'click',
-    autoAdvance: true,
     position: 'top',
-    inDialog: true
   },
-  // Step 7: View the shift card
+  // Step 6: View the shift card
   {
     target: '#shift-list .shift:first-child',
-    message: '🎉 Your 1st shift 🎉',
+    message: 'Sample shift card',
     subText:
-      'This card shows the shift start/end times on the left.<br>The workplace, working hours (excluding breaks) and the total income are also shown.',
-    type: 'info',
+      'This is sample data for the tutorial.<br>The card shows shift start/end times, workplace, working hours (excluding breaks), and total income.',
     position: 'top'
   },
-  // Step 8: Select to expand
+  // Step 6: Select to expand
   {
-    target: '#shift-list .shift:first-child details.info',
+    target: '#shift-list .shift:first-child .info',
     message: 'Open your shift',
     subText:
       'Select the card to see pay rate, breaks, total duration, and options to edit or delete the shift.',
-    type: 'interactive',
-    waitForEvent: 'toggle',
-    autoAdvance: true,
     position: 'top'
   },
-  // Step 9: Edit button
+  // Step 7: Edit button
   {
-    target: '#shift-list .shift:first-child .actions button',
+    target: '#shift-list .shift:first-child .info .actions .edit-btn',
     message: 'Edit or delete your shift',
     subText: 'Use the Edit button to update shift details or delete the shift.',
-    type: 'info',
     position: 'top'
   },
-  // Step 11: Week stats
+  // Step 8: Week stats
   {
     target: '.weekly.stats, .monthly.stats',
     message: 'Your weekly earnings',
-    subText: 'Earnings and hours for each week are shown here. Select a row to see the whole week.',
-    type: 'interactive',
-    waitForEvent: 'click',
-    autoAdvance: true,
+    subText: 'Earnings and hours for each week are shown here.',
     position: 'left'
   },
-  // Step 12: Calendar overview
+  // Step 9: Calendar overview
   {
     target: '.calendar',
     message: 'Your calendar',
     subText: 'The selected range is highlighted.',
-    type: 'info',
     position: 'bottom'
   },
-  // Step 13: Day schedule
+  // Step 10: Day schedule
   {
     target: '#day-schedule',
     message: 'Day schedule',
     subText: 'This section shows all shifts for the selected day, week or month.',
-    type: 'info',
     position: 'top'
   },
-  // Step 14: Open main menu (closing step 1) - always shown even after skip
+  // Step 11: Open main menu (closing step 1) - always shown even after skip
   {
     target: '.menu-btn',
     message: 'Open the menu',
     subText:
       'Select here to open the menu. From here you can log in to sync your data across devices, replay this tutorial, and more.',
-    type: 'closing',
-    waitForEvent: 'click',
-    autoAdvance: true,
     position: 'bottom'
   },
-  // Step 15: Login button
+  // Step 12: Login button
   {
-    target: '#menu-login-btn',
+    target: '.main-menu #menu-login-btn',
     message: 'Sync your data (Under testing)',
     subText: 'Log in to back up your shifts and access them from any device.',
-    type: 'closing',
-    position: 'bottom'
+    position: 'bottom',
+    inMainMenu: true
   },
-  // Step 16: Tutorial button
+  // Step 13: Tutorial button
   {
-    target: '#menu-tutorial-btn',
+    target: '.main-menu #menu-tutorial-btn',
     message: 'Replay this tutorial',
     subText: 'You can revisit this guide anytime from here.',
-    type: 'closing',
-    position: 'bottom'
+    position: 'bottom',
+    inMainMenu: true
   },
-  // Step 17: Completion
+  // Step 14: Completion
   {
     target: null,
     message: "You're all set!",
     subText: 'Start tracking your shifts and earnings. <br>Happy working! 🎉',
-    type: 'closing',
     position: 'center'
   }
 ];
@@ -191,8 +149,10 @@ export default {
       pollTimer: null as ReturnType<typeof setInterval> | null,
       advanceTimer: null as ReturnType<typeof setTimeout> | null,
       eventCleanup: null as (() => void) | null,
-      dialogCloseCleanup: null as (() => void) | null,
-      tooltipTeleportTarget: 'body' as string | Element
+      // Track demo shifts added for the tutorial so we can remove them later
+      demoShiftIds: [] as string[],
+      demoInjected: false,
+      dialogOpening: null as HTMLDialogElement | null,
     };
   },
 
@@ -214,13 +174,9 @@ export default {
     },
 
     showSkip(): boolean {
-      // Show skip button on non-closing steps (closing steps always show)
-      return this.currentStep.type !== 'closing';
-    },
-
-    showNext(): boolean {
-      // Show next button on info and closing steps, but not if the step waits for an event
-      return (this.currentStep.type === 'info' || this.currentStep.type === 'closing') && !this.currentStep.waitForEvent;
+      // Jump to the tutorial button step (first closing step with target '#menu-tutorial-btn')
+      const tutorialStepIndex = this.steps.findIndex((s: TutorialStep) => s.target?.includes('#menu-tutorial-btn'));
+      return this.currentStepIndex < tutorialStepIndex;
     },
 
     spotlightOverlayStyle(): Record<string, string> {
@@ -238,9 +194,60 @@ export default {
   },
 
   methods: {
+    isTargetInDialog(step: TutorialStep): boolean {
+      if (!step.target) return false;
+      const targetEl = document.querySelector(step.target);
+      if (!targetEl) return false;
+      const dialog = targetEl.closest('dialog');
+      return !!dialog;
+    },
+
+    async ensureElementOpen(step: TutorialStep) {
+      if (!step.target) return;
+
+      if (step.inMainMenu) {
+        const menuBtn = document.querySelector('.menu-btn:not(.open)') as HTMLElement | null;
+        console.log('Menu button found:', menuBtn);
+        menuBtn?.click();
+        await this.$nextTick();
+      }
+
+      console.log('step.target:', step.target);
+
+      const target = document.querySelector(step.target);
+      if (!target) return;
+
+      console.log('Target element found:', target);
+
+      const details = target.closest('details');
+      if (details) details.open = true;
+
+      const dialog = target.closest('dialog');
+      if (!dialog) {
+        console.log('No dialog found for target:', step.target);
+        this.dialogOpening?.close();
+        this.dialogOpening = null;
+      } else
+        // Only open if it's not already the currently opened dialog 
+        if (this.dialogOpening !== dialog) {
+          console.log('Opening dialog for tutorial step:', dialog);
+
+          this.dialogOpening = dialog;
+          dialog.showModal();
+
+          // Display the tutorial dialog on top of the opened dialog
+          (this.$refs['tutorial-dialog'] as HTMLDialogElement | null)?.close();
+          this.$nextTick(() => {
+            (this.$refs['tutorial-dialog'] as HTMLDialogElement | null)?.showModal();
+          });
+        }
+    },
+
     start() {
       this.currentStepIndex = 0;
       this.active = true;
+      // Inject demo shifts for the tutorial preview (local-only)
+      this.injectDemoShifts();
       this.$nextTick(() => this.setupStep());
     },
 
@@ -256,16 +263,8 @@ export default {
 
     skip() {
       this.cleanupStep();
-      // Open the main menu programmatically and jump to the tutorial button step
-      const menuBtn = document.querySelector('.menu-btn') as HTMLElement | null;
-      if (menuBtn) {
-        // Ensure menu is open (click toggles it)
-        if (!menuBtn.classList.contains('open')) {
-          menuBtn.click();
-        }
-      }
       // Jump to the tutorial button step (first closing step with target '#menu-tutorial-btn')
-      const tutorialStepIndex = this.steps.findIndex((s: TutorialStep) => s.target === '#menu-tutorial-btn');
+      const tutorialStepIndex = this.steps.findIndex((s: TutorialStep) => s.target?.includes('#menu-tutorial-btn'));
       if (tutorialStepIndex >= 0) {
         this.currentStepIndex = tutorialStepIndex;
         this.$nextTick(() => this.setupStep());
@@ -276,13 +275,72 @@ export default {
 
     finish() {
       this.cleanupStep();
+      // Remove demo shifts when tutorial completes
+      try {
+        this.removeDemoShifts();
+      } catch (e) {
+        console.error('Failed to remove demo shifts', e);
+      }
       this.active = false;
       localStorage.setItem('tutorialCompleted', 'true');
     },
 
+    /** Add temporary demo shifts to the local store for the tutorial. */
+    injectDemoShifts() {
+      if (this.demoInjected) return;
+      try {
+        const shiftsStore = useShiftsStore();
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        const demo1 = new Shift({
+          id: `tutorial-demo-1`,
+          workplace: 'Demo Café',
+          payRate: 18,
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 0),
+          unpaidBreaks: [
+            new Duration({
+              minutes: 30
+            })
+          ]
+        });
+
+        const demo2 = new Shift({
+          id: `tutorial-demo-2`,
+          workplace: 'Demo Office',
+          payRate: 22,
+          startTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 14, 0),
+          endTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 18, 30)
+        });
+
+        // Directly push to local store state to avoid API calls
+        shiftsStore.shifts.push(demo1, demo2);
+        this.demoShiftIds = [demo1.id, demo2.id];
+        this.demoInjected = true;
+      } catch (err) {
+        console.error('Error injecting demo shifts for tutorial:', err);
+      }
+    },
+
+    /** Remove temporary demo shifts that were added for the tutorial. */
+    removeDemoShifts() {
+      if (!this.demoInjected || !this.demoShiftIds.length) return;
+      try {
+        const shiftsStore = useShiftsStore();
+        shiftsStore.shifts = shiftsStore.shifts.filter((s) => !this.demoShiftIds.includes(s.id));
+        this.demoShiftIds = [];
+        this.demoInjected = false;
+      } catch (err) {
+        console.error('Error removing demo shifts:', err);
+      }
+    },
+
     setupStep() {
       const step = this.currentStep;
-      this.tooltipTeleportTarget = 'body';
+
+      this.ensureElementOpen(step);
 
       if (!step.target) {
         this.spotlightRect = null;
@@ -292,40 +350,22 @@ export default {
 
       // Poll for element appearance (handles dialogs opening, elements rendering)
       this.pollForTarget(step.target, (elements) => {
-        // For steps inside a dialog, teleport the tooltip into the dialog
-        // so it renders in the top-layer above the showModal() backdrop
-        if (step.inDialog) {
-          const dialog = elements[0].closest('dialog');
-          if (dialog) {
-            this.tooltipTeleportTarget = dialog;
-            // backdrop-filter on the dialog creates a containing block,
-            // making position:fixed act like position:absolute. Allow the
-            // tooltip to overflow the dialog bounds so it isn't clipped.
-            dialog.style.overflow = 'visible';
-            this.watchDialogClose(dialog);
-          }
-        }
-
         elements[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         const rect = this.getCombinedRect(elements);
         this.updateSpotlight(rect);
         this.positionTooltip(rect);
-        this.observeResize(elements);
+        // Constantly update for the first 0.5s to handle transitions
+        const updateInterval = setInterval(() => this.handleChanges(), 10);
+        setTimeout(() => clearInterval(updateInterval), 500);
+        this.observeChanges(elements);
         this.attachEvent(step, elements);
       });
     },
 
     pollForTarget(selector: string, callback: (elements: Element[]) => void) {
-      const step = this.currentStep;
-
       const tryFind = (): Element[] | null => {
         const els = Array.from(document.querySelectorAll(selector));
         if (els.length === 0) return null;
-        // For inDialog steps, wait until the dialog is actually open
-        if (step.inDialog) {
-          const dialog = els[0].closest('dialog');
-          if (!dialog || !dialog.open) return null;
-        }
         return els;
       };
 
@@ -372,82 +412,118 @@ export default {
       const pad = 16;
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const tooltipW = 300;
+      const preferredPosition = step.position || 'bottom';
 
-      // When teleported inside a dialog with backdrop-filter, position:fixed
-      // behaves like position:absolute relative to the dialog.
-      // Offset coordinates from viewport-space to dialog-space.
-      let ox = 0, oy = 0, cw = vw, ch = vh;
-      if (step.inDialog && this.tooltipTeleportTarget instanceof HTMLElement) {
-        const dr = this.tooltipTeleportTarget.getBoundingClientRect();
-        ox = dr.left;
-        oy = dr.top;
-        cw = dr.width;
-        ch = dr.height;
-      }
+      const provisionalStyle: Record<string, string> = {
+        position: 'fixed',
+        visibility: 'hidden',
+        top: '0px',
+        left: '0px'
+      };
 
-      // Calculate available space
-      const spaceAbove = rect.top;
-      const spaceBelow = vh - rect.bottom;
+      this.tooltipStyle = provisionalStyle;
 
-      let pos = step.position || 'bottom';
+      const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max));
+      const fallbackPositions = ['bottom', 'top', 'right', 'left'] as const;
+      const candidates = [preferredPosition, ...fallbackPositions.filter((position) => position !== preferredPosition)];
 
-      // Auto-adjust if not enough space
-      if (pos === 'bottom' && spaceBelow < 160) pos = 'top';
-      if (pos === 'top' && spaceAbove < 160) pos = 'bottom';
-
-      const style: Record<string, string> = { position: 'fixed' };
-
-      // Clamp horizontal: always keep tooltip within [pad, vw - tooltipW - pad]
-      const clampX = (x: number) => Math.max(pad, Math.min(x, vw - tooltipW - pad));
-
-      switch (pos) {
-        case 'top':
-          style.bottom = `${ch - rect.top + oy + pad}px`;
-          style.left = `${clampX(rect.left + rect.width / 2 - tooltipW / 2) - ox}px`;
-          break;
-        case 'bottom':
-          style.top = `${rect.bottom + pad - oy}px`;
-          style.left = `${clampX(rect.left + rect.width / 2 - tooltipW / 2) - ox}px`;
-          break;
-        case 'left':
-          style.top = `${rect.top + rect.height / 2 - 60 - oy}px`;
-          style.right = `${cw - rect.left + ox + pad}px`;
-          break;
-        case 'right':
-          style.top = `${rect.top + rect.height / 2 - 60 - oy}px`;
-          style.left = `${rect.right + pad - ox}px`;
-          break;
-      }
-
-      this.tooltipStyle = style;
-
-      // Post-render clamp: after the tooltip is rendered, check if it overflows and fix
       this.$nextTick(() => {
         const tooltip = document.querySelector('.tutorial-tooltip') as HTMLElement | null;
         if (!tooltip) return;
-        const tr = tooltip.getBoundingClientRect();
 
-        // Clamp bottom overflow
-        if (tr.bottom > vh - pad) {
-          tooltip.style.top = `${vh - tr.height - pad - oy}px`;
-          tooltip.style.bottom = 'auto';
+        const tr = tooltip.getBoundingClientRect();
+        const tooltipW = tr.width;
+        const tooltipH = tr.height;
+        const maxWidth = Math.max(0, vw - pad * 2);
+        const maxHeight = Math.max(0, vh - pad * 2);
+        const fitsVertically = tooltipH <= maxHeight;
+        const fitsHorizontally = tooltipW <= maxWidth;
+
+        const placeTooltip = (position: 'top' | 'bottom' | 'left' | 'right' | 'center') => {
+          const nextStyle: Record<string, string> = {
+            position: 'fixed',
+            visibility: 'visible'
+          };
+
+          if (!fitsHorizontally) nextStyle.maxWidth = `${maxWidth}px`;
+          if (!fitsVertically) {
+            nextStyle.maxHeight = `${maxHeight}px`;
+            nextStyle.overflowY = 'auto';
+          }
+
+          switch (position) {
+            case 'top': {
+              const top = clamp(rect.top - tooltipH - pad, pad, vh - tooltipH - pad);
+              const left = clamp(rect.left + rect.width / 2 - tooltipW / 2, pad, vw - tooltipW - pad);
+              nextStyle.top = `${top}px`;
+              nextStyle.left = `${left}px`;
+              break;
+            }
+            case 'bottom': {
+              const top = clamp(rect.bottom + pad, pad, vh - tooltipH - pad);
+              const left = clamp(rect.left + rect.width / 2 - tooltipW / 2, pad, vw - tooltipW - pad);
+              nextStyle.top = `${top}px`;
+              nextStyle.left = `${left}px`;
+              break;
+            }
+            case 'left': {
+              const left = clamp(rect.left - tooltipW - pad, pad, vw - tooltipW - pad);
+              const top = clamp(rect.top + rect.height / 2 - tooltipH / 2, pad, vh - tooltipH - pad);
+              nextStyle.top = `${top}px`;
+              nextStyle.left = `${left}px`;
+              break;
+            }
+            case 'right': {
+              const left = clamp(rect.right + pad, pad, vw - tooltipW - pad);
+              const top = clamp(rect.top + rect.height / 2 - tooltipH / 2, pad, vh - tooltipH - pad);
+              nextStyle.top = `${top}px`;
+              nextStyle.left = `${left}px`;
+              break;
+            }
+            case 'center':
+              nextStyle.top = `${clamp(vh / 2 - tooltipH / 2, pad, vh - tooltipH - pad)}px`;
+              nextStyle.left = `${clamp(vw / 2 - tooltipW / 2, pad, vw - tooltipW - pad)}px`;
+              break;
+          }
+
+          this.tooltipStyle = nextStyle;
+        };
+
+        for (const position of candidates) {
+          if (position === 'center') {
+            placeTooltip(position);
+            return;
+          }
+
+          if (position === 'top' && rect.top >= tooltipH + pad) {
+            placeTooltip(position);
+            return;
+          }
+
+          if (position === 'bottom' && vh - rect.bottom >= tooltipH + pad) {
+            placeTooltip(position);
+            return;
+          }
+
+          if (position === 'left' && rect.left >= tooltipW + pad) {
+            placeTooltip(position);
+            return;
+          }
+
+          if (position === 'right' && vw - rect.right >= tooltipW + pad) {
+            placeTooltip(position);
+            return;
+          }
         }
-        // Clamp top overflow
-        if (tr.top < pad) {
-          tooltip.style.top = `${pad - oy}px`;
-          tooltip.style.bottom = 'auto';
-        }
-        // Clamp right overflow
-        if (tr.right > vw - pad) {
-          tooltip.style.left = `${vw - tr.width - pad - ox}px`;
-          tooltip.style.right = 'auto';
-        }
-        // Clamp left overflow
-        if (tr.left < pad) {
-          tooltip.style.left = `${pad - ox}px`;
-          tooltip.style.right = 'auto';
-        }
+
+        const bestPosition =
+          candidates.find((position) => position === 'top' && rect.top >= tooltipH / 2)
+          ?? candidates.find((position) => position === 'bottom' && vh - rect.bottom >= tooltipH / 2)
+          ?? candidates.find((position) => position === 'left' && rect.left >= tooltipW / 2)
+          ?? candidates.find((position) => position === 'right' && vw - rect.right >= tooltipW / 2)
+          ?? 'center';
+
+        placeTooltip(bestPosition);
       });
     },
 
@@ -460,7 +536,8 @@ export default {
       };
     },
 
-    observeResize(elements: Element[]) {
+    observeChanges(elements: Element[]) {
+      // Element Resize
       this.resizeObserver?.disconnect();
       this.resizeObserver = new ResizeObserver(() => {
         const rect = this.getCombinedRect(elements);
@@ -469,12 +546,26 @@ export default {
       });
       for (const el of elements) this.resizeObserver.observe(el);
       this.resizeObserver.observe(document.documentElement);
-      // Also listen for scroll to reposition
-      window.addEventListener('scroll', this.handleScroll, true);
-      window.addEventListener('resize', this.handleScroll);
+
+      // Window Resize
+      window.addEventListener('resize', this.handleChanges);
+
+      // Scroll
+      window.addEventListener('scroll', this.handleChanges, true);
+
+      // Handle cases where the element is removed from the DOM (e.g. dialog closed)
+      const mutationObserver = new MutationObserver(() => {
+        for (const el of elements) {
+          if (!document.body.contains(el)) {
+            mutationObserver.disconnect();
+            break;
+          }
+        }
+      });
+      mutationObserver.observe(document.body, { childList: true, subtree: true });
     },
 
-    handleScroll() {
+    handleChanges() {
       const step = this.currentStep;
       if (!step.target) return;
       const els = Array.from(document.querySelectorAll(step.target));
@@ -483,26 +574,6 @@ export default {
         this.updateSpotlight(rect);
         this.positionTooltip(rect);
       }
-    },
-
-    watchDialogClose(dialog: HTMLDialogElement) {
-      // If the dialog is closed while we're on an inDialog step,
-      // rewind to the last non-inDialog step so the user can retry.
-      const handler = () => {
-        if (!this.active || !this.currentStep.inDialog) return;
-        this.cleanupStep();
-        // Find the last step before the current block of inDialog steps
-        let rewindIndex = this.currentStepIndex;
-        while (rewindIndex > 0 && this.steps[rewindIndex - 1].inDialog) {
-          rewindIndex--;
-        }
-        // Go one more back to the step that triggers opening the dialog
-        this.currentStepIndex = Math.max(0, rewindIndex - 1);
-        this.$nextTick(() => this.setupStep());
-      };
-
-      dialog.addEventListener('close', handler, { once: true });
-      this.dialogCloseCleanup = () => dialog.removeEventListener('close', handler);
     },
 
     attachEvent(step: TutorialStep, elements: Element[]) {
@@ -519,42 +590,17 @@ export default {
         this.eventCleanup = () => clearInterval(fillTimer);
         return;
       }
-
-      if (!step.waitForEvent) return;
-
-      const handler = () => {
-        // If this step is inside a dialog, cancel the dialog-close watcher
-        // so the dialog closing after form submission doesn't trigger a rewind
-        if (this.dialogCloseCleanup) {
-          this.dialogCloseCleanup();
-          this.dialogCloseCleanup = null;
-        }
-        // Small delay to let the UI update (e.g. dialog opening)
-        this.advanceTimer = setTimeout(() => this.advance(), 150);
-      };
-
-      // Listen on all matched elements — first one to fire advances
-      const cleanups: (() => void)[] = [];
-      for (const el of elements) {
-        el.addEventListener(step.waitForEvent, handler, { once: true });
-        cleanups.push(() => el.removeEventListener(step.waitForEvent!, handler));
-      }
-      this.eventCleanup = () => cleanups.forEach((fn) => fn());
     },
 
     cleanupStep() {
-      // Restore dialog overflow if we set it to visible for an inDialog step
-      if (this.tooltipTeleportTarget instanceof HTMLElement) {
-        this.tooltipTeleportTarget.style.overflow = '';
-      }
       if (this.pollTimer) {
         clearInterval(this.pollTimer);
         this.pollTimer = null;
       }
       this.resizeObserver?.disconnect();
       this.resizeObserver = null;
-      window.removeEventListener('scroll', this.handleScroll, true);
-      window.removeEventListener('resize', this.handleScroll);
+      window.removeEventListener('scroll', this.handleChanges, true);
+      window.removeEventListener('resize', this.handleChanges);
       if (this.advanceTimer) {
         clearTimeout(this.advanceTimer);
         this.advanceTimer = null;
@@ -563,69 +609,72 @@ export default {
         this.eventCleanup();
         this.eventCleanup = null;
       }
-      if (this.dialogCloseCleanup) {
-        this.dialogCloseCleanup();
-        this.dialogCloseCleanup = null;
-      }
     }
   },
 
   beforeUnmount() {
     this.cleanupStep();
+    try {
+      this.removeDemoShifts();
+    } catch {
+      /* ignore */
+    }
   }
 };
 </script>
 
 <template>
-  <!-- Backdrop (always teleported to body) -->
-  <Teleport to="body">
-    <Transition name="tutorial-fade">
-      <div v-if="active" class="tutorial-overlay">
-        <div class="tutorial-backdrop"
-          :class="{ 'tutorial-backdrop--has-spotlight': spotlightRect && !currentStep.inDialog }">
-          <div v-if="spotlightRect && !currentStep.inDialog" class="tutorial-spotlight" :style="spotlightOverlayStyle">
-          </div>
+  <dialog v-if="active" open ref="tutorial-dialog" class="tutorial-dialog">
+    <div class="tutorial-overlay">
+      <div class="tutorial-backdrop" :class="{ 'tutorial-backdrop--has-spotlight': spotlightRect }">
+        <div v-if="spotlightRect" class="tutorial-spotlight" :style="spotlightOverlayStyle">
         </div>
       </div>
-    </Transition>
-  </Teleport>
 
-  <!-- Tooltip (teleported to dialog element for inDialog steps, body otherwise) -->
-  <Teleport :to="tooltipTeleportTarget">
-    <div v-if="active" class="tutorial-tooltip" :style="tooltipStyle"
-      :class="{ 'tutorial-tooltip--center': isCenterOverlay }">
-      <div v-if="!isCenterOverlay" class="tutorial-step-indicator">
-        {{ currentStepIndex }} / {{ steps.length - 2 }}
-        <!-- Exclude the final "You're all set!" step -->
-      </div>
+      <div class="tutorial-tooltip" :style="tooltipStyle" :class="{ 'tutorial-tooltip--center': isCenterOverlay }">
+        <img v-if="currentStepIndex === 0" src="/logo.png" alt="ShiftPay logo" class="tutorial-logo" />
 
-      <img v-if="currentStepIndex === 0" src="/logo.png" alt="ShiftPay logo" class="tutorial-logo" />
+        <h3 class="tutorial-title">{{ currentStep.message }}</h3>
+        <p v-if="currentStep.subText" class="tutorial-sub" v-html="currentStep.subText"></p>
 
-      <h3 class="tutorial-title">{{ currentStep.message }}</h3>
-      <p v-if="currentStep.subText" class="tutorial-sub" v-html="currentStep.subText"></p>
+        <div class="tutorial-actions">
+          <button v-if="showSkip" class="tutorial-btn tutorial-btn--skip" @click="skip">
+            Skip
+          </button>
 
-      <div class="tutorial-actions">
-        <button v-if="showSkip" class="tutorial-btn tutorial-btn--skip" @click="skip">
-          Skip
-        </button>
+          <button v-if="!isLastStep" class="tutorial-btn tutorial-btn--next" @click="advance">
+            Next
+          </button>
 
-        <button v-if="showNext && !isLastStep" class="tutorial-btn tutorial-btn--next" @click="advance">
-          Next
-        </button>
-
-        <button v-if="isLastStep" class="tutorial-btn tutorial-btn--finish" @click="finish">
-          Got it!
-        </button>
+          <button v-if="isLastStep" class="tutorial-btn tutorial-btn--finish" @click="finish">
+            Got it!
+          </button>
+        </div>
       </div>
     </div>
-  </Teleport>
+  </dialog>
 </template>
 
 <style scoped>
-.tutorial-overlay {
+.tutorial-dialog {
   position: fixed;
   inset: 0;
   z-index: 10000;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
   pointer-events: none;
 }
 
@@ -653,6 +702,9 @@ export default {
 }
 
 .tutorial-tooltip {
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: fixed;
   z-index: 10002;
   width: 300px;
   max-width: calc(100vw - 32px);
@@ -696,15 +748,6 @@ export default {
     opacity: 1;
     scale: 1;
   }
-}
-
-.tutorial-step-indicator {
-  font-size: 0.7em;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-color-faded, #999);
-  margin-bottom: 0.5em;
 }
 
 .tutorial-logo {
@@ -770,16 +813,5 @@ export default {
 .tutorial-btn--finish {
   background: var(--success-color, #64ff64);
   color: var(--text-color-black, #000);
-}
-
-/* Fade transition for the whole overlay */
-.tutorial-fade-enter-active,
-.tutorial-fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.tutorial-fade-enter-from,
-.tutorial-fade-leave-to {
-  opacity: 0;
 }
 </style>

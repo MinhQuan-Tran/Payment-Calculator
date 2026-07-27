@@ -35,11 +35,18 @@ export default {
   methods: {
     handleClickOutside(event: MouseEvent) {
       if (!this.menuOpened) return;
+
+      // Disable during tutorial to prevent closing menu when clicking on overlay
+      const tutorial = this.$refs.tutorial as { active?: boolean; } | undefined;
+      if (tutorial?.active) return;
+
       const menuBtn = this.$refs['menu-btn'] as HTMLDivElement;
-      const menu = this.$refs.mainMenu && (this.$refs.mainMenu as any).$el;
+      const menuElements = (this.$refs.mainMenu as { $el: HTMLElement; }).$el;
+
+      // Check if the click is outside the menu and menu button
       if (
-        menu &&
-        !menu.contains(event.target as Node) &&
+        menuElements &&
+        !menuElements.contains(event.target as Node) &&
         !menuBtn.contains(event.target as Node)
       ) {
         this.menuOpened = false;
@@ -48,16 +55,19 @@ export default {
 
     showSyncDialog() {
       console.log('Showing sync dialog');
-      (this.$refs['sync-dialog'] as any).showModal();
+      (this.$refs['sync-dialog'] as HTMLDialogElement).showModal();
     },
+
     showImportDialog() {
       this.menuOpened = false;
-      (this.$refs['import-dialog'] as any).showModal();
+      (this.$refs['import-dialog'] as HTMLDialogElement).showModal();
     },
+
     showChangelogDialog() {
       this.menuOpened = false;
-      (this.$refs['changelog-dialog'] as any).showFullHistory();
+      (this.$refs['changelog-dialog'] as { showModal: (showFullHistory: boolean, markVersionSeenOnClose: boolean) => void; }).showModal(true, false);
     },
+
     handleSyncComplete() {
       // Clear the pending flag so stores fetch from server
       localStorage.removeItem('syncPending');
@@ -65,9 +75,10 @@ export default {
       this.workInfosStore.fetch();
       this.shiftTemplatesStore.fetch();
     },
+
     startTutorial() {
       this.menuOpened = false;
-      (this.$refs.tutorial as any).start();
+      (this.$refs.tutorial as { start: () => void; }).start();
     },
 
     toggleLegends() {
@@ -76,10 +87,9 @@ export default {
     },
 
     async handleLogin() {
-      // Close the menu first
-      this.menuOpened = false;
-
       await this.authStore.login();
+
+      this.menuOpened = false;
 
       // Set stores to loading state while we check for data and potentially sync
       this.shiftsStore.status = STATUS.Loading;
@@ -134,7 +144,7 @@ export default {
 
     // Show changelog if app version is different (skip if tutorial not completed)
     if (localStorage.getItem('tutorialCompleted') === 'true') {
-      (this.$refs['changelog-dialog'] as any).checkAndShow();
+      (this.$refs['changelog-dialog'] as { checkAndShow: () => void; }).checkAndShow();
     } else {
       // If tutorial not completed, set current version to avoid showing changelog on first run
       localStorage.setItem('appVersion', packageJson.version);
@@ -172,7 +182,7 @@ export default {
       <img src="/logo.png" alt="ShiftPay logo" class="logo" />
       <h1 class="app-title">ShiftPay</h1>
     </div>
-    <div ref="menu-btn" class="menu-btn" @click="menuOpened = !menuOpened" :class="{ open: menuOpened }">
+    <div ref="menu-btn" @click="menuOpened = !menuOpened" :class="{ 'menu-btn': true, 'open': menuOpened }">
       <div class="bar"></div>
       <div class="bar"></div>
       <div class="bar"></div>

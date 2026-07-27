@@ -10,7 +10,7 @@ import { useShiftSessionStore } from '@/stores/shiftSessionStore';
 import DayScheduleShiftCard from '@/components/DayScheduleShiftCard.vue';
 import BaseDialog from '@/components/BaseDialog.vue';
 import ClearShiftsForm from '@/components/ClearShiftsForm.vue';
-import ShiftForm from '@/components/ShiftForm.vue';
+import ShiftDialog from '@/components/ShiftDialog.vue';
 import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 type EmptyShiftTone = 'pastOnly' | 'todayOnly' | 'futureOnly' | 'spansToday';
@@ -143,7 +143,7 @@ export default {
     };
   },
 
-  components: { DayScheduleShiftCard, BaseDialog, ClearShiftsForm, ShiftForm, LoadingOverlay },
+  components: { DayScheduleShiftCard, BaseDialog, ClearShiftsForm, ShiftDialog, LoadingOverlay },
 
   methods: {
     currencyFormat,
@@ -157,7 +157,7 @@ export default {
         action: 'edit',
         placeholderShift: this.selectedShift
       };
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     handleCheckInOut() {
@@ -186,7 +186,7 @@ export default {
         }
       };
 
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     handleAddShift() {
@@ -200,7 +200,7 @@ export default {
           endTime: new Date(new Date(this.selectedRange.start).setHours(new Date().getHours(), new Date().getMinutes()))
         }
       };
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     updateTimeWidth() {
@@ -374,10 +374,8 @@ export default {
       <ClearShiftsForm :selected-date="selectedRange.start" />
     </BaseDialog>
 
-    <BaseDialog ref="shiftDialog" :title="shiftFormData.title" :reset-forms="shiftFormData.resetForm">
-      <ShiftForm :selected-date="selectedRange.start" :shift="shiftFormData.placeholderShift"
-        :action="shiftFormData.action" />
-    </BaseDialog>
+    <ShiftDialog ref="shiftDialog" :title="shiftFormData.title" :reset-forms="shiftFormData.resetForm"
+      :selected-date="selectedRange.start" :shift="shiftFormData.placeholderShift" :action="shiftFormData.action" />
 
     <LoadingOverlay :active="shiftsStore.status === STATUS.Loading" />
   </div>
