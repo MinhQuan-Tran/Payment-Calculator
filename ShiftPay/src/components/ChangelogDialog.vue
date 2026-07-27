@@ -58,19 +58,11 @@ export default {
     openDialog(showFullHistory = false, markVersionSeenOnClose = false) {
       this.showingFullHistory = showFullHistory;
       this.shouldMarkVersionSeenOnClose = markVersionSeenOnClose;
-      (this.$refs.dialog as any).showModal();
-    },
-
-    showModal() {
-      this.openDialog();
+      (this.$refs.dialog as HTMLDialogElement).showModal();
     },
 
     showFullHistory() {
       this.openDialog(true, false);
-    },
-
-    closeDialog() {
-      (this.$refs.dialog as any).closeDialog();
     },
 
     handleClose() {

@@ -157,7 +157,7 @@ export default {
         action: 'edit',
         placeholderShift: this.selectedShift
       };
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     handleCheckInOut() {
@@ -186,7 +186,7 @@ export default {
         }
       };
 
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     handleAddShift() {
@@ -200,7 +200,7 @@ export default {
           endTime: new Date(new Date(this.selectedRange.start).setHours(new Date().getHours(), new Date().getMinutes()))
         }
       };
-      (this.$refs.shiftDialog as any).showModal();
+      (this.$refs.shiftDialog as HTMLDialogElement).showModal();
     },
 
     updateTimeWidth() {

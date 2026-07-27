@@ -363,7 +363,6 @@ export default {
     },
 
     pollForTarget(selector: string, callback: (elements: Element[]) => void) {
-      const step = this.currentStep;
       const tryFind = (): Element[] | null => {
         const els = Array.from(document.querySelectorAll(selector));
         if (els.length === 0) return null;
@@ -617,7 +616,7 @@ export default {
     this.cleanupStep();
     try {
       this.removeDemoShifts();
-    } catch (e) {
+    } catch {
       /* ignore */
     }
   }

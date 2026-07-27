@@ -28,7 +28,7 @@ export const useWorkInfosStore = defineStore('workInfos', {
 
         // Parse & Validate - store id, workplace, and payRates
         this.workInfos = new Map<string, WorkInfo>(
-          parsedData.map((workInfo: any) => [
+          parsedData.map((workInfo: WorkInfo) => [
             workInfo.workplace,
             {
               id: workInfo.id,

@@ -15,6 +15,21 @@ import ButtonConfirm from './ButtonConfirm.vue';
 import ComboBox from './ComboBox.vue';
 import InputLabel from './InputLabel.vue';
 
+function createInitialData(
+  shift: Partial<Shift>
+) {
+  return {
+    STATUS,
+    formData: deepClone<Partial<Shift>>(shift),
+    saveShiftTemplate: false,
+    deleteShiftTemplate: false,
+    repeatPreset: 'none',
+    templateName: '',
+    hiddenElements: [] as Element[], // Elements to hide when holding a button in action bar
+    currentAction: '', // Track the current action being performed for loading state
+  };
+}
+
 export default {
   name: 'ShiftDialog',
   props: {
@@ -41,16 +56,7 @@ export default {
   },
 
   data() {
-    return {
-      STATUS,
-      formData: deepClone<Partial<Shift>>(this.shift),
-      saveShiftTemplate: false,
-      deleteShiftTemplate: false,
-      repeatPreset: 'none',
-      templateName: '',
-      hiddenElements: [] as Element[], // Elements to hide when holding a button in action bar
-      currentAction: '', // Track the current action being performed for loading state
-    };
+    return createInitialData(this.shift);
   },
 
   computed: {
@@ -69,16 +75,6 @@ export default {
   },
 
   methods: {
-    showModal() {
-      const base = this.$refs.baseDialog as any;
-      base?.showModal();
-    },
-
-    closeDialog() {
-      const base = this.$refs.baseDialog as any;
-      base?.closeDialog();
-    },
-
     setRepeatPreset(preset: 'none' | '1d' | '1w' | '1m' | 'custom') {
       // Set repeat fields for radio buttons
       const dayInput = this.$refs['repeat-day'] as HTMLInputElement | undefined;
@@ -160,7 +156,7 @@ export default {
       } catch (error) {
         alert('Invalid shift');
         console.error(this.formData);
-        throw new Error('Invalid shift: ' + error);
+        throw new Error('Unable to parse form data into Shift object', { cause: error });
       }
     },
 
@@ -194,7 +190,7 @@ export default {
 
                 repeatDay.setCustomValidity('Please enter a valid repeat interval.');
                 repeatDay.reportValidity();
-                return false as any;
+                return false;
               }
 
               const repeatEndDate = new Date(
@@ -312,10 +308,7 @@ export default {
     },
 
     resetForm() {
-      // https://stackoverflow.com/a/50854892
-      if (this.$options.data) {
-        Object.assign(this.$data, (this.$options.data as any).call(this, this));
-      }
+      Object.assign(this.$data, createInitialData(this.shift));
     },
 
     toDateTimeLocal(date: Date | undefined) {

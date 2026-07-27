@@ -19,7 +19,7 @@ export const useShiftTemplatesStore = defineStore('shiftTemplates', {
         // Migration: older versions stored templates as an object/map keyed by name.
         // Convert to the array format expected by the rest of the code.
         if (parsedData && typeof parsedData === 'object' && !Array.isArray(parsedData)) {
-          parsedData = Object.entries(parsedData).map(([name, value]: [string, any]) => ({
+          parsedData = Object.entries(parsedData).map(([name, value]: [string, unknown]) => ({
             templateName: name,
             ...(typeof value === 'object' && value !== null ? value : {})
           }));
@@ -39,7 +39,7 @@ export const useShiftTemplatesStore = defineStore('shiftTemplates', {
 
         // Parse & Validate - store both id and shift data
         this.templates = new Map<string, ShiftTemplate>(
-          parsedData.map((template: any) => [
+          parsedData.map((template: ShiftTemplate) => [
             template.templateName,
             {
               id: template.id,
@@ -59,10 +59,11 @@ export const useShiftTemplatesStore = defineStore('shiftTemplates', {
       await withStatus(this, async () => {
         console.log('Adding/updating shift template:', name, template);
 
+        // Validate
         try {
           template = Shift.parse(template);
-        } catch (error: any) {
-          throw new Error('Invalid shift template input: ' + (error && error.message ? error.message : String(error)));
+        } catch (error) {
+          throw new Error('Could not add/update shift template - Validation failed', { cause: error });
         }
 
         const auth = useAuthStore();

@@ -182,8 +182,8 @@
     ]
   },
   {
-    "version": "",
-    "date": "",
+    "version": "0.4.5",
+    "date": "2026-07-27T00:00:00+1100",
     "changes": [
       "Improve tutorial content and flow",
       "Add weekly repeat interval for shifts",

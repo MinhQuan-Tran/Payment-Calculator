@@ -36,7 +36,7 @@ export function deepClone<T>(obj: T, hash = new WeakMap()): T {
 
   // Handle Array
   if (Array.isArray(obj)) {
-    const clonedArr: any[] = [];
+    const clonedArr: unknown[] = [];
     hash.set(obj, clonedArr);
     obj.forEach((item, index) => {
       clonedArr[index] = deepClone(item, hash);
@@ -65,12 +65,12 @@ export function deepClone<T>(obj: T, hash = new WeakMap()): T {
   }
 
   // Handle Object (including objects created with custom constructors)
-  const clonedObj: any = Object.create(Object.getPrototypeOf(obj));
+  const clonedObj = Object.create(Object.getPrototypeOf(obj));
   hash.set(obj, clonedObj);
 
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      clonedObj[key] = deepClone((obj as any)[key], hash);
+      clonedObj[key] = deepClone(obj[key], hash);
     }
   }
 
@@ -88,7 +88,7 @@ export async function withStatus<T>(store: { status: Status }, executor: () => P
   try {
     const result = await Promise.resolve(executor());
     return result;
-  } catch (error: any) {
+  } catch (error) {
     store.status = STATUS.Error;
     throw error;
   } finally {

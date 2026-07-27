@@ -4,7 +4,7 @@ export default {
   components: { ButtonConfirm },
   props: {
     value: String,
-    list: Array<String>,
+    list: Array<string>,
     deletable: {
       type: Boolean,
       default: false
@@ -22,7 +22,7 @@ export default {
   computed: {
     filteredList() {
       if (!this.value) return this.list || [];
-      return this.list?.filter((item: String) => item.toLowerCase().includes(this.value!.toLowerCase())) || [];
+      return this.list?.filter((item: string) => item.toLowerCase().includes(this.value!.toLowerCase())) || [];
     }
   },
 
@@ -63,7 +63,7 @@ export default {
   },
 
   methods: {
-    handleDelete(itemName: String) {
+    handleDelete(itemName: string) {
       console.log('delete', itemName);
       this.$emit('delete-item', itemName);
     },

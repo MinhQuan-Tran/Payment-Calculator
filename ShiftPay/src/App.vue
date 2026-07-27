@@ -41,7 +41,7 @@ export default {
       if (tutorial?.active) return;
 
       const menuBtn = this.$refs['menu-btn'] as HTMLDivElement;
-      const menu = this.$refs.mainMenu && (this.$refs.mainMenu as any).$el;
+      const menu = this.$refs.mainMenu as HTMLElement;
 
       // Check if the click is outside the menu and menu button
       if (
@@ -55,17 +55,17 @@ export default {
 
     showSyncDialog() {
       console.log('Showing sync dialog');
-      (this.$refs['sync-dialog'] as any).showModal();
+      (this.$refs['sync-dialog'] as { showModal: () => void; }).showModal();
     },
 
     showImportDialog() {
       this.menuOpened = false;
-      (this.$refs['import-dialog'] as any).showModal();
+      (this.$refs['import-dialog'] as { showModal: () => void; }).showModal();
     },
 
     showChangelogDialog() {
       this.menuOpened = false;
-      (this.$refs['changelog-dialog'] as any).showFullHistory();
+      (this.$refs['changelog-dialog'] as { showFullHistory: () => void; }).showFullHistory();
     },
 
     handleSyncComplete() {
@@ -78,7 +78,7 @@ export default {
 
     startTutorial() {
       this.menuOpened = false;
-      (this.$refs.tutorial as any).start();
+      (this.$refs.tutorial as { start: () => void; }).start();
     },
 
     toggleLegends() {
@@ -144,7 +144,7 @@ export default {
 
     // Show changelog if app version is different (skip if tutorial not completed)
     if (localStorage.getItem('tutorialCompleted') === 'true') {
-      (this.$refs['changelog-dialog'] as any).checkAndShow();
+      (this.$refs['changelog-dialog'] as { checkAndShow: () => void; }).checkAndShow();
     } else {
       // If tutorial not completed, set current version to avoid showing changelog on first run
       localStorage.setItem('appVersion', packageJson.version);

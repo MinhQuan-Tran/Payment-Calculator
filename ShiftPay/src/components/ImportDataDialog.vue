@@ -13,6 +13,36 @@ import type { WorkInfo, ImportParsedData } from '@/types';
 
 type ImportStep = 'select' | 'preview' | 'importing' | 'complete' | 'error';
 
+function hasCheckInTime(data: unknown): data is { checkInTime?: unknown; } {
+  return typeof data === 'object' && data !== null && 'checkInTime' in data;
+}
+
+type JsonRecord = Record<string, unknown>;
+
+function isJsonRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null;
+}
+
+function readNumberSet(value: unknown): Set<number> | null {
+  if (value === undefined) {
+    return new Set<number>();
+  }
+
+  if (!Array.isArray(value)) {
+    if (typeof value !== 'number') {
+      return null;
+    }
+
+    return new Set<number>([value]);
+  }
+
+  if (!value.every((entry) => typeof entry === 'number')) {
+    return null;
+  }
+
+  return new Set<number>(value);
+}
+
 export default {
   components: { BaseDialog },
 
@@ -65,16 +95,6 @@ export default {
   },
 
   methods: {
-    showModal() {
-      this.reset();
-      (this.$refs.dialog as any).showModal();
-    },
-
-    closeDialog() {
-      (this.$refs.dialog as any).closeDialog();
-      this.reset();
-    },
-
     reset() {
       this.step = 'select';
       this.isDragging = false;
@@ -112,6 +132,11 @@ export default {
       (this.$refs.fileInput as HTMLInputElement).click();
     },
 
+    closeDialog() {
+      const dialog = this.$refs.dialog as { closeDialog: () => void; } | undefined;
+      dialog?.closeDialog();
+    },
+
     async processFile(file: File) {
       if (!file.name.endsWith('.json')) {
         this.importError = 'Please select a JSON file.';
@@ -126,13 +151,13 @@ export default {
         const data = JSON.parse(text);
         this.parseData(data);
         this.step = 'preview';
-      } catch (err: any) {
-        this.importError = 'Failed to read file: ' + (err.message || String(err));
+      } catch (error) {
+        this.importError = 'Failed to read file: ' + (error instanceof Error ? error.message : String(error));
         this.step = 'error';
       }
     },
 
-    parseData(data: any) {
+    parseData(data: unknown) {
       const result: ImportParsedData = {
         shifts: [],
         shiftErrors: [],
@@ -146,74 +171,99 @@ export default {
 
       // Parse shifts
       try {
-        const shiftsRaw = JSON.parse(data.shifts || data.entries || '[]');
-        const parsed = Shift.parseAll(shiftsRaw);
+        const source = isJsonRecord(data) ? data : null;
+        const shiftsJson = typeof source?.shifts === 'string' ? source.shifts : typeof source?.entries === 'string' ? source.entries : '[]';
+        const shiftsRaw = JSON.parse(shiftsJson) as unknown;
+        const parsedShifts = Array.isArray(shiftsRaw) ? shiftsRaw : [];
+        const parsed = Shift.parseAll(parsedShifts);
         result.shifts = parsed.shifts;
         if (!parsed.success) {
-          result.shiftErrors.push(`${shiftsRaw.length - parsed.shifts.length} shift(s) could not be parsed`);
+          result.shiftErrors.push(`${parsedShifts.length - parsed.shifts.length} shift(s) could not be parsed`);
         }
-      } catch (err: any) {
-        result.shiftErrors.push('Failed to parse shifts: ' + (err.message || String(err)));
+      } catch (error) {
+        result.shiftErrors.push('Failed to parse shifts: ' + (error instanceof Error ? error.message : String(error)));
       }
 
       // Parse templates (supports both array and object-map formats)
       try {
-        const templatesRaw = JSON.parse(data.shiftTemplates || data.templates || '{}');
-        const templateEntries: [string, any][] = Array.isArray(templatesRaw)
-          ? templatesRaw.map((item: any) => [item.templateName || '', item])
-          : Object.entries(templatesRaw);
+        const source = isJsonRecord(data) ? data : null;
+        const templatesJson =
+          typeof source?.shiftTemplates === 'string'
+            ? source.shiftTemplates
+            : typeof source?.templates === 'string'
+              ? source.templates
+              : '{}';
+        const templatesRaw = JSON.parse(templatesJson) as unknown;
+        const templateEntries: [string, unknown][] = Array.isArray(templatesRaw)
+          ? templatesRaw.map((item) => [isJsonRecord(item) && typeof item.templateName === 'string' ? item.templateName : '', item])
+          : Object.entries(isJsonRecord(templatesRaw) ? templatesRaw : {});
         for (const [name, template] of templateEntries) {
           try {
             if (!name || typeof name !== 'string') {
               throw new Error('Missing or invalid template name');
             }
-            result.templates.set(name, Shift.parse(template.shift || template.entry || template));
-          } catch (err: any) {
-            result.templateErrors.push(`Template "${name || '(unnamed)'}": ${err.message || String(err)}`);
+            const templateRecord = isJsonRecord(template) ? template : null;
+            const templateValue = templateRecord?.shift ?? templateRecord?.entry ?? template;
+            result.templates.set(name, Shift.parse(templateValue));
+          } catch (error) {
+            result.templateErrors.push(`Template "${name || '(unnamed)'}": ${(error instanceof Error ? error.message : String(error))}`);
           }
         }
-      } catch (err: any) {
-        result.templateErrors.push('Failed to parse templates: ' + (err.message || String(err)));
+      } catch (error) {
+        result.templateErrors.push('Failed to parse templates: ' + (error instanceof Error ? error.message : String(error)));
       }
 
       // Parse work infos (supports both array and object-map formats)
       try {
-        const workInfosRaw = JSON.parse(data.workInfos || data.prevWorkInfos || '{}');
-        const entries: [string, any][] = Array.isArray(workInfosRaw)
-          ? workInfosRaw.map((item: any) => [item.workplace, item])
-          : Object.entries(workInfosRaw);
+        const source = isJsonRecord(data) ? data : null;
+        const workInfosJson =
+          typeof source?.workInfos === 'string'
+            ? source.workInfos
+            : typeof source?.prevWorkInfos === 'string'
+              ? source.prevWorkInfos
+              : '{}';
+        const workInfosRaw = JSON.parse(workInfosJson) as unknown;
+        const entries: [string, unknown][] = Array.isArray(workInfosRaw)
+          ? workInfosRaw.map((item) => [isJsonRecord(item) && typeof item.workplace === 'string' ? item.workplace : '', item])
+          : Object.entries(isJsonRecord(workInfosRaw) ? workInfosRaw : {});
         for (const [workplace, info] of entries) {
           try {
             if (!workplace || typeof workplace !== 'string') {
               throw new Error('Missing or invalid workplace name');
             }
-            if (typeof info !== 'object' || info === null) {
+            if (!isJsonRecord(info)) {
               throw new Error('Invalid data format');
             }
-            const payRates = new Set<number>(info.payRates || info.payRate || []);
-            if (![...payRates].every((rate) => typeof rate === 'number')) {
+            const payRates = readNumberSet(info.payRates ?? info.payRate);
+            if (payRates === null) {
               throw new Error('Invalid pay rates');
             }
             result.workInfos.set(workplace, { payRates } as WorkInfo);
-          } catch (err: any) {
-            result.workInfoErrors.push(`Workplace "${workplace}": ${err.message || String(err)}`);
+          } catch (error) {
+            result.workInfoErrors.push(`Workplace "${workplace}": ${(error instanceof Error ? error.message : String(error))}`);
           }
         }
-      } catch (err: any) {
-        result.workInfoErrors.push('Failed to parse work infos: ' + (err.message || String(err)));
+      } catch (error) {
+        result.workInfoErrors.push('Failed to parse work infos: ' + (error instanceof Error ? error.message : String(error)));
       }
 
       // Parse check-in time
-      if (data.checkInTime) {
-        try {
-          const parsed = new Date(data.checkInTime);
+      if (hasCheckInTime(data) && data.checkInTime !== undefined && data.checkInTime !== null) {
+        const checkInTimeValue = data.checkInTime;
+
+        if (
+          typeof checkInTimeValue === 'string' ||
+          typeof checkInTimeValue === 'number' ||
+          checkInTimeValue instanceof Date
+        ) {
+          const parsed = new Date(checkInTimeValue);
           if (isNaN(parsed.getTime())) {
             result.checkInTimeError = 'Invalid check-in time format';
           } else {
             result.checkInTime = parsed;
           }
-        } catch (err: any) {
-          result.checkInTimeError = 'Failed to parse check-in time';
+        } else {
+          result.checkInTimeError = 'Invalid check-in time format';
         }
       }
 
@@ -250,8 +300,9 @@ export default {
 
         this.step = 'complete';
         this.$emit('complete');
-      } catch (err: any) {
-        this.importError = 'Import failed: ' + (err.message || String(err));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.importError = 'Import failed: ' + message;
         this.step = 'error';
       }
     },

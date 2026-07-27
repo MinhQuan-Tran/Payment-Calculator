@@ -23,15 +23,23 @@ export default class Shift {
     Object.assign(this, { id, ...rest });
   }
 
-  static parse(data: any): Shift {
+  static parse(data: unknown): Shift {
     if (!data) throw new Error('Shift data is undefined');
 
     // Pull values from either plain or underscored shapes
-    const id = data.id ?? data._id;
-    const workplace = data.workplace ?? data._workplace;
-    const payRate = data.payRate ?? data._payRate;
-    const startRaw = data.startTime ?? data._startTime ?? data.from ?? data._from;
-    const endRaw = data.endTime ?? data._endTime ?? data.to ?? data._to;
+    const id = (data as { id?: string }).id ?? (data as { _id?: string })._id;
+    const workplace = (data as { workplace?: string }).workplace ?? (data as { _workplace?: string })._workplace;
+    const payRate = (data as { payRate?: number }).payRate ?? (data as { _payRate?: number })._payRate;
+    const startRaw =
+      (data as { startTime?: Date }).startTime ??
+      (data as { _startTime?: Date })._startTime ??
+      (data as { from?: Date }).from ??
+      (data as { _from?: Date })._from;
+    const endRaw =
+      (data as { endTime?: Date }).endTime ??
+      (data as { _endTime?: Date })._endTime ??
+      (data as { to?: Date }).to ??
+      (data as { _to?: Date })._to;
 
     // Basic validation (don’t reject 0 payRate)
     if (id == null || workplace == null || startRaw == null || endRaw == null || payRate == null) {
@@ -50,14 +58,20 @@ export default class Shift {
     const endTime = new Date(endRaw);
 
     // Build unpaid breaks array as Duration[]
-    const rawBreaks = Array.isArray(data.unpaidBreaks)
-      ? data.unpaidBreaks
-      : Array.isArray(data._unpaidBreaks)
-        ? data._unpaidBreaks
+    const rawBreaks = Array.isArray((data as { unpaidBreaks?: Duration[] }).unpaidBreaks)
+      ? (data as { unpaidBreaks?: Duration[] }).unpaidBreaks
+      : Array.isArray((data as { _unpaidBreaks?: Duration[] })._unpaidBreaks)
+        ? (data as { _unpaidBreaks?: Duration[] })._unpaidBreaks
         : [];
 
-    const unpaidBreaks = rawBreaks
-      .map((ub: any) => (ub instanceof Duration ? ub : new Duration(ub)))
+    const unpaidBreaks = (rawBreaks ?? [])
+      .map((ub: unknown) => {
+        if (ub instanceof Duration) {
+          return ub;
+        }
+
+        return new Duration(ub as ConstructorParameters<typeof Duration>[0]);
+      })
       .filter((ub: Duration) => ub.hours + ub.minutes > 0);
 
     return new Shift({
@@ -70,7 +84,7 @@ export default class Shift {
     });
   }
 
-  static parseAll(data: any[]): {
+  static parseAll(data: unknown[]): {
     shifts: Shift[];
     success: boolean;
   } {
@@ -82,8 +96,8 @@ export default class Shift {
         .map((rawShift: unknown) => {
           try {
             return this.parse(rawShift);
-          } catch (parseError: any) {
-            console.error('Failed to parse shift from source:', rawShift, parseError);
+          } catch (error) {
+            console.error('Failed to parse shift from source:', rawShift, error);
             success = false;
             return null;
           }
